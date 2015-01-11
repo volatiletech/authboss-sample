@@ -52,5 +52,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.ListenAndServe("localhost:8080", authboss.Router(c))
+	http.ListenAndServe("localhost:8080", authboss.NewRouter(c))
 }
