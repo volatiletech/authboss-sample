@@ -1,112 +1,141 @@
 <html>
 <head>
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        @import url(http://fonts.googleapis.com/css?family=Roboto:400,100);
-
-        body {
-            font-family: 'Roboto', sans-serif;
+        @media (min-width: 768px) {
+            .omb_row-sm-offset-3 div:first-child[class*="col-"] {
+                margin-left: 25%;
+            }
         }
 
-        .login-card {
-            padding: 40px;
-            width: 274px;
-            background-color: #F7F7F7;
-            margin: 0 auto 10px;
-            border-radius: 2px;
-            box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .login-card h1 {
-            font-weight: 100;
+        .omb_login .omb_authTitle {
             text-align: center;
-            font-size: 2.3em;
+            line-height: 300%;
         }
 
-        .login-card input[type=submit] {
-            width: 100%;
-            display: block;
-            margin-bottom: 10px;
+        .omb_login .omb_socialButtons a {
+            color: white; // In yourUse @body-bg
+        opacity:0.9;
+        }
+        .omb_login .omb_socialButtons a:hover {
+            color: white;
+            opacity:1;
+        }
+        .omb_login .omb_socialButtons .omb_btn-facebook {background: #3b5998;}
+        .omb_login .omb_socialButtons .omb_btn-twitter {background: #00aced;}
+        .omb_login .omb_socialButtons .omb_btn-google {background: #c32f10;}
+
+
+        .omb_login .omb_loginOr {
             position: relative;
+            font-size: 1.5em;
+            color: #aaa;
+            margin-top: 1em;
+            margin-bottom: 1em;
+            padding-top: 0.5em;
+            padding-bottom: 0.5em;
         }
-
-        .login-card input[type=text], input[type=password] {
-            height: 44px;
-            font-size: 16px;
-            width: 100%;
-            margin-bottom: 10px;
-            -webkit-appearance: none;
-            background: #fff;
-            border: 1px solid #d9d9d9;
-            border-top: 1px solid #c0c0c0;
-            padding: 0 8px;
-            box-sizing: border-box;
-            -moz-box-sizing: border-box;
+        .omb_login .omb_loginOr .omb_hrOr {
+            background-color: #cdcdcd;
+            height: 1px;
+            margin-top: 0px !important;
+            margin-bottom: 0px !important;
         }
-
-        .login-card input[type=text]:hover, input[type=password]:hover {
-            border: 1px solid #b9b9b9;
-            border-top: 1px solid #a0a0a0;
-            -moz-box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-            -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .login {
+        .omb_login .omb_loginOr .omb_spanOr {
+            display: block;
+            position: absolute;
+            left: 50%;
+            top: -0.6em;
+            margin-left: -1.5em;
+            background-color: white;
+            width: 3em;
             text-align: center;
-            font-size: 14px;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            height: 36px;
-            padding: 0 8px;
         }
 
-        .login-submit {
-            border: 0px;
-            color: #fff;
-            text-shadow: 0 1px rgba(0,0,0,0.1);
-            background-color: #4d90fe;
+        .omb_login .omb_loginForm .input-group.i {
+            width: 2em;
+        }
+        .omb_login .omb_loginForm  .help-block {
+            color: red;
         }
 
-        .login-submit:hover {
-            border: 0px;
-            text-shadow: 0 1px rgba(0,0,0,0.3);
-            background-color: #357ae8;
-        }
 
-        .login-card a {
-            text-decoration: none;
-            color: #666;
-            font-weight: 400;
-            text-align: center;
-            display: inline-block;
-            opacity: 0.6;
-            transition: opacity ease 0.5s;
-        }
-
-        .login-card a:hover {
-            opacity: 1;
-        }
-
-        .login-help {
-            width: 100%;
-            text-align: center;
-            font-size: 12px;
+        @media (min-width: 768px) {
+            .omb_login .omb_forgotPwd {
+                text-align: right;
+                margin-top:10px;
+            }
         }
     </style>
 </head>
 <body>
-<div class="login-card">
-    <h1>Log-in</h1><br>
-    <form method="POST" action="/login">
-        <input type="text" name="username" placeholder="Username" required="true">
-        <input type="password" name="password" placeholder="Password" required="true">
-        <input type="submit" name="login" class="login login-submit" value="Login">
-    </form>
+<div class="container">
+    <div class="omb_login">
+        <h3 class="omb_authTitle">Login<!-- or <a href="#">Sign up</a>--></h3>
+        <!--<div class="row omb_row-sm-offset-3 omb_socialButtons">
+            <div class="col-xs-4 col-sm-2">
+                <a href="#" class="btn btn-lg btn-block omb_btn-facebook">
+                    <i class="fa fa-facebook visible-xs"></i>
+                    <span class="hidden-xs">Facebook</span>
+                </a>
+            </div>
+            <div class="col-xs-4 col-sm-2">
+                <a href="#" class="btn btn-lg btn-block omb_btn-twitter">
+                    <i class="fa fa-twitter visible-xs"></i>
+                    <span class="hidden-xs">Twitter</span>
+                </a>
+            </div>
+            <div class="col-xs-4 col-sm-2">
+                <a href="#" class="btn btn-lg btn-block omb_btn-google">
+                    <i class="fa fa-google-plus visible-xs"></i>
+                    <span class="hidden-xs">Google+</span>
+                </a>
+            </div>
+        </div>
 
-    <!--<div class="login-help">
-        <a href="#">Register</a><a href="#">Forgot Password</a>
-    </div>-->
+        <div class="row omb_row-sm-offset-3 omb_loginOr">
+            <div class="col-xs-12 col-sm-6">
+                <hr class="omb_hrOr">
+                <span class="omb_spanOr">or</span>
+            </div>
+        </div>-->
+
+        <div class="row omb_row-sm-offset-3">
+            <div class="col-xs-12 col-sm-6">
+                <form class="omb_loginForm" action="login" method="POST">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                        <input type="text" class="form-control" name="username" placeholder="Username" value="{{.Username}}">
+                    </div>
+                    <span class="help-block"></span>
+
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                        <input  type="password" class="form-control" name="password" placeholder="Password">
+                    </div>
+                    <span class="help-block">{{.Error}}</span>
+
+                    <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+                </form>
+            </div>
+        </div>
+        <div class="row omb_row-sm-offset-3">
+            <div class="col-xs-12 col-sm-3">
+                <label class="checkbox">
+                    <input type="checkbox" value="remember-me">Remember Me
+                </label>
+            </div>
+            <div class="col-xs-12 col-sm-3">
+                <p class="omb_forgotPwd">
+                    <a href="#">Forgot password?</a>
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
+
+
+
