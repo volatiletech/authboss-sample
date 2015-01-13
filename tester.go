@@ -8,6 +8,7 @@ import (
 
 	"gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
+	_ "gopkg.in/authboss.v0/recover"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 

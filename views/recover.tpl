@@ -10,22 +10,22 @@
             <div class="panel panel-default">
                 <div class="panel-heading">Recover</div>
                 <div class="panel-body">
-                    <form action="login" method="POST">
+                    <form action="recover" method="POST">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                <input class="form-control" type="text" name="username" placeholder="Username" value="{{.Username}}" required />
+                            </div>
+                        </div>
                         <div class="form-group{{if .Error}} has-error{{end}}">
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="fa fa-user"></i></span>
-                                <input type="text" class="form-control" name="username" placeholder="Username" value="{{.Username}}">
-                            </div>
-                        </div>
-                        <div class="form-group{{if .Error}} has-error{{end}}">
-                            <div class="input-group">
-                                <span class="input-group-addon"><i class="fa fa-lock"></i></span>
-                                <input  type="password" class="form-control" name="password" placeholder="Password">
+                                <input class="form-control" type="text" name="confirmUsername" placeholder="Confirm Username" required />
                             </div>
                             <span class="help-block">{{.Error}}</span>
                         </div>
-                        <button class="btn btn-primary btn-block" type="submit">Login</button>
-                        <a class="btn btn-link btn-block" type="submit" href="/recover">Recover Account</a>
+                        <button class="btn btn-primary btn-block" type="submit">Recover</button>
+                        <a class="btn btn-link btn-block" type="submit" href="/login">Cancel</a>
                     </form>
                 </div>
             </div>
@@ -34,5 +34,3 @@
 </div>
 </body>
 </html>
-
-
