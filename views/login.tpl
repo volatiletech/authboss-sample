@@ -24,6 +24,13 @@
                             </div>
                             <span class="help-block">{{.Error}}</span>
                         </div>
+                        {{if .ShowRemember}}
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="rm" value="true"> Remember Me
+                            </label>
+                        </div>
+                        {{end}}
                         <button class="btn btn-primary btn-block" type="submit">Login</button>
                         <a class="btn btn-link btn-block" type="submit" href="/recover">Recover Account</a>
                     </form>
