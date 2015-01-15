@@ -15,6 +15,11 @@ import (
 	"html/template"
 )
 
+type clientStoreMock struct{}
+
+func (c clientStoreMock) Get(_ string) (string, bool) { return "", false }
+func (c clientStoreMock) Put(_, _ string)             {}
+
 type MongoStorer struct {
 	users *mgo.Collection
 }
@@ -51,6 +56,10 @@ func main() {
 	c.LogWriter = os.Stdout
 	c.ViewsPath = "views"
 	c.AuthLoginSuccessRoute = "/dashboard"
+	c.CookieStoreMaker = func(_ *http.Request) authboss.ClientStorer {
+		return clientStoreMock{}
+	}
+	c.SessionStoreMaker = authboss.SessionStoreMaker(c.CookieStoreMaker)
 
 	if err := authboss.Init(c); err != nil {
 		log.Fatal(err)
