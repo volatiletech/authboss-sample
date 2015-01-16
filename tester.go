@@ -62,6 +62,9 @@ func (s CookieStorer) Put(key, value string) {
 	http.SetCookie(s.w, cookie)
 }
 
+func (s CookieStorer) Del(key string) {
+}
+
 type SessionStorer struct {
 	w http.ResponseWriter
 	r *http.Request
@@ -99,6 +102,17 @@ func (s SessionStorer) Put(key, value string) {
 	}
 
 	session.Values[key] = value
+	session.Save(s.r, s.w)
+}
+
+func (s SessionStorer) Del(key string) {
+	session, err := sessionStore.Get(s.r, "derpasaurous")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	delete(session.Values, key)
 	session.Save(s.r, s.w)
 }
 
@@ -158,7 +172,7 @@ func (s MongoStorer) UseToken(givenKey, token string) (key string, err error) {
 func main() {
 	c := authboss.NewConfig()
 	cookieStore = securecookie.New([]byte("very-secret"), nil)
-	sessionStore = sessions.NewCookieStore(securecookie.GenerateRandomKey(1))
+	sessionStore = sessions.NewCookieStore([]byte("asdf"))
 
 	if session, err := mgo.Dial("authboss:authboss@localhost/authboss"); err != nil {
 		log.Fatal(err)
@@ -182,8 +196,17 @@ func main() {
 	mux.Handle("/", authboss.NewRouter(c))
 
 	templates, _ := template.ParseFiles("views/dashboard.tpl")
-	mux.HandleFunc("/dashboard", func(w http.ResponseWriter, _ *http.Request) {
-		templates.ExecuteTemplate(w, "dashboard.tpl", nil)
+	mux.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		sstorer := NewSessionStorer(w, r)
+
+		username, ok := sstorer.Get(authboss.SessionKey)
+
+		data := struct {
+			Username   string
+			IsLoggedIn bool
+		}{username, ok}
+
+		templates.ExecuteTemplate(w, "dashboard.tpl", data)
 	})
 
 	http.ListenAndServe("localhost:8080", mux)

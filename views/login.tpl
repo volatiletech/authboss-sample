@@ -8,7 +8,7 @@
     <div class="row" style="margin-top: 75px;">
         <div class="col-md-offset-4 col-md-4">
             <div class="panel panel-default">
-                <div class="panel-heading">Recover</div>
+                <div class="panel-heading">Login</div>
                 <div class="panel-body">
                     <form action="login" method="POST">
                         <div class="form-group{{if .Error}} has-error{{end}}">
@@ -32,7 +32,9 @@
                         </div>
                         {{end}}
                         <button class="btn btn-primary btn-block" type="submit">Login</button>
+                        {{if .ShowRecover}}
                         <a class="btn btn-link btn-block" type="submit" href="/recover">Recover Account</a>
+                        {{end}}
                     </form>
                 </div>
             </div>
