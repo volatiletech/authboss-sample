@@ -1,4 +1,4 @@
-package main
+package main // import "gopkg.in/authboss-sample.v0"
 
 import (
 	"net/http"
@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
+	_ "gopkg.in/authboss.v0/recover"
 	_ "gopkg.in/authboss.v0/remember"
-	//_ "gopkg.in/authboss.v0/recover"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 
@@ -122,8 +122,10 @@ type MongoStorer struct {
 }
 
 type MGOUser struct {
-	Username string `bson:"username"`
-	Password string `bson:"password"`
+	Username   string `bson:"username"`
+	Password   string `bson:"password"`
+	Email      string `bson:"email"`
+	Resettoken string `bson:"resetToken"`
 }
 
 type MGOToken struct {
@@ -136,6 +138,19 @@ func (s MongoStorer) Create(key string, attr authboss.Attributes) error {
 }
 
 func (s MongoStorer) Put(key string, attr authboss.Attributes) error {
+	u := MGOUser{}
+	if err := s.users.Find(bson.M{"username": key}).One(&u); err != nil {
+		return err
+	}
+
+	if err := attr.Bind(&u); err != nil {
+		log.Println("error", err)
+	}
+
+	if err := s.users.Update(bson.M{"username": key}, u); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -193,7 +208,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", authboss.NewRouter(c))
+	mux.Handle("/", authboss.NewRouter())
 
 	templates, _ := template.ParseFiles("views/dashboard.tpl")
 	mux.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {

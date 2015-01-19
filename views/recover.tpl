@@ -20,7 +20,7 @@
                         <div class="form-group{{if .Error}} has-error{{end}}">
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="fa fa-user"></i></span>
-                                <input class="form-control" type="text" name="confirmUsername" placeholder="Confirm Username" required />
+                                <input class="form-control" type="text" name="confirmUsername" placeholder="Confirm Username" value="{{.ConfirmUsername}}" required />
                             </div>
                             <span class="help-block">{{.Error}}</span>
                         </div>
