@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -30,6 +31,18 @@ func main() {
 	c.CookieStoreMaker = NewCookieStorer
 	c.SessionStoreMaker = NewSessionStorer
 	c.Mailer = authboss.LogMailer(os.Stdout)
+
+	src, err := ioutil.ReadFile("views/layout.tpl")
+	if err != nil {
+		log.Fatal("Could not load template.")
+	}
+	c.Layout, _ = template.New("").Parse(string(src))
+
+	src, err = ioutil.ReadFile("views/emailLayout.tpl")
+	if err != nil {
+		log.Fatal("Could not load template.")
+	}
+	c.LayoutEmail, _ = template.New("").Parse(string(src))
 
 	if err := authboss.Init(c); err != nil {
 		log.Fatal(err)

@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/authboss.v0"
 )
 
@@ -36,7 +35,7 @@ func (s MemStorer) Create(key string, attr authboss.Attributes) error {
 	}
 
 	s.Users[key] = user
-	spew.Dump(s.Users)
+	//spew.Dump(s.Users)
 	return nil
 }
 
@@ -55,13 +54,13 @@ func (s MemStorer) Get(key string, attrMeta authboss.AttributeMeta) (result inte
 
 func (s MemStorer) AddToken(key, token string) error {
 	s.Tokens[key] = token
-	spew.Dump(s.Tokens)
+	//spew.Dump(s.Tokens)
 	return nil
 }
 
 func (s MemStorer) DelTokens(key string) error {
 	delete(s.Tokens, key)
-	spew.Dump(s.Tokens)
+	//spew.Dump(s.Tokens)
 	return nil
 }
 
