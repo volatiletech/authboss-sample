@@ -20,17 +20,16 @@ import (
 type SessionFlasher struct{}
 
 func main() {
-	c := authboss.NewConfig()
 	cookieStore = securecookie.New([]byte("very-secret"), nil)
 	sessionStore = sessions.NewCookieStore([]byte("asdf"))
-	c.Storer = NewMemStorer()
-	c.LogWriter = os.Stdout
-	c.AuthLoginSuccessRoute = "/dashboard"
-	c.CookieStoreMaker = NewCookieStorer
-	c.SessionStoreMaker = NewSessionStorer
-	c.Mailer = authboss.LogMailer(os.Stdout)
+	authboss.Cfg.Storer = NewMemStorer()
+	authboss.Cfg.LogWriter = os.Stdout
+	authboss.Cfg.AuthLoginSuccessRoute = "/dashboard"
+	authboss.Cfg.CookieStoreMaker = NewCookieStorer
+	authboss.Cfg.SessionStoreMaker = NewSessionStorer
+	authboss.Cfg.Mailer = authboss.LogMailer(os.Stdout)
 
-	if err := authboss.Init(c); err != nil {
+	if err := authboss.Init(); err != nil {
 		log.Fatal(err)
 	}
 
