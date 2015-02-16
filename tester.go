@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	"github.com/justinas/nosurf"
 )
 
 type SessionFlasher struct{}
@@ -28,6 +29,10 @@ func main() {
 	authboss.Cfg.CookieStoreMaker = NewCookieStorer
 	authboss.Cfg.SessionStoreMaker = NewSessionStorer
 	authboss.Cfg.Mailer = authboss.LogMailer(os.Stdout)
+	authboss.Cfg.XSRFName = "csrf_token"
+	authboss.Cfg.XSRFMaker = func(_ http.ResponseWriter, r *http.Request) string {
+		return nosurf.Token(r)
+	}
 
 	if err := authboss.Init(); err != nil {
 		log.Fatal(err)
@@ -35,7 +40,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", authboss.NewRouter())
+	mux.Handle("/", nosurf.New(authboss.NewRouter()))
 
 	templates, _ := template.ParseFiles("views/dashboard.tpl")
 	mux.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
