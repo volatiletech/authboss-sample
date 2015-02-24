@@ -22,7 +22,7 @@ type MemStorer struct {
 func NewMemStorer() *MemStorer {
 	return &MemStorer{
 		Users: map[string]User{
-			"kris": User{"kris", "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", "kris@test.com", "", time.Now().UTC()}, // pass = 1234
+			"user": User{"user", "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", "kris@test.com", "", time.Now().UTC()}, // pass = 1234
 		},
 		Tokens: make(map[string]string),
 	}
@@ -35,7 +35,6 @@ func (s MemStorer) Create(key string, attr authboss.Attributes) error {
 	}
 
 	s.Users[key] = user
-	//spew.Dump(s.Users)
 	return nil
 }
 
@@ -54,13 +53,11 @@ func (s MemStorer) Get(key string, attrMeta authboss.AttributeMeta) (result inte
 
 func (s MemStorer) AddToken(key, token string) error {
 	s.Tokens[key] = token
-	//spew.Dump(s.Tokens)
 	return nil
 }
 
 func (s MemStorer) DelTokens(key string) error {
 	delete(s.Tokens, key)
-	//spew.Dump(s.Tokens)
 	return nil
 }
 

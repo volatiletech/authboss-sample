@@ -1,2 +1,2 @@
 # authboss-sample
-A sample implementation of authboss.  
+A sample implementer of authboss.
