@@ -15,6 +15,6 @@
 <div>
 	<p>{{.Content}}</p>
 </div>
-{{end}}
 <br />
-<a href="/blogs">Index</a> | <a href="/blogs/{{.id}}/edit">Edit</a> | <a href="/blogs/{{.id}}/destroy">Destroy</a>
+<a href="/blogs">Index</a> | <a href="/blogs/{{.ID}}/edit">Edit</a> | <a href="/blogs/{{.ID}}/destroy">Destroy</a>
+{{end}}

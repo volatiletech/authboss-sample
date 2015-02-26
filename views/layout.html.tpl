@@ -11,4 +11,5 @@
 </body>
 </html>
 {{define "pagetitle"}}{{end}}
+{{define "yield"}}{{end}}
 {{define "authboss"}}{{end}}

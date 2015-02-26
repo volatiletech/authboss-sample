@@ -4,14 +4,19 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strconv"
 	"time"
 
 	ab "gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
+	_ "gopkg.in/authboss.v0/confirm"
+	_ "gopkg.in/authboss.v0/expire"
+	_ "gopkg.in/authboss.v0/lock"
 	_ "gopkg.in/authboss.v0/recover"
 	_ "gopkg.in/authboss.v0/register"
 	_ "gopkg.in/authboss.v0/remember"
@@ -36,22 +41,26 @@ func setupAuthboss() {
 	ab.Cfg.Storer = NewMemStorer()
 	ab.Cfg.MountPath = "/auth"
 	ab.Cfg.LogWriter = os.Stdout
+	ab.Cfg.HostName = "localhost:3000"
 
-	ab.Cfg.AuthLoginSuccessRoute = "/"
-	layout := template.Must(template.New("layout").
-		Funcs(funcs).
-		ParseFiles("views/layout.html.tpl"))
-	ab.Cfg.Layout = layout
+	ab.Cfg.LayoutDataMaker = layoutData
 
-	ab.Cfg.CookieStoreMaker = NewCookieStorer
-	ab.Cfg.SessionStoreMaker = NewSessionStorer
-
-	ab.Cfg.Mailer = ab.LogMailer(os.Stdout)
+	b, err := ioutil.ReadFile(`views\layout.html.tpl`)
+	if err != nil {
+		panic(err)
+	}
+	ab.Cfg.Layout = template.Must(template.New("layout").Funcs(funcs).Parse(string(b)))
+	//ab.Cfg.LayoutEmail = template.Must(template.New("layout").Parse(`{{template "authboss" .}}`))
 
 	ab.Cfg.XSRFName = "csrf_token"
 	ab.Cfg.XSRFMaker = func(_ http.ResponseWriter, r *http.Request) string {
 		return nosurf.Token(r)
 	}
+
+	ab.Cfg.CookieStoreMaker = NewCookieStorer
+	ab.Cfg.SessionStoreMaker = NewSessionStorer
+
+	ab.Cfg.Mailer = ab.SMTPMailer("smtp.gmail.com:587", smtp.PlainAuth("bits128@gmail.com", "bits128@gmail.com", "fbzyhhlgrcyxwkqz", "smtp.gmail.com"))
 
 	if err := ab.Init(); err != nil {
 		log.Fatal(err)
@@ -79,7 +88,7 @@ func main() {
 	gets := mux.Methods("GET").Subrouter()
 	posts := mux.Methods("POST").Subrouter()
 
-	mux.Handle("/auth", ab.NewRouter())
+	mux.PathPrefix("/auth").Handler(ab.NewRouter())
 
 	gets.HandleFunc("/blogs/new", new)
 	gets.HandleFunc("/blogs/{id}/edit", edit)
@@ -95,12 +104,12 @@ func main() {
 	gets.HandleFunc("/blogs/{id}/destroy", destroy)
 
 	mux.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		io.WriteString(w, "Not found")
 	})
 
 	// Set up our middleware chain
-	stack := alice.New(logger /*, nosurfing*/).Then(mux)
+	stack := alice.New(logger /*, nosurfing*/, touch).Then(mux)
 
 	// Start the server
 	port := os.Getenv("PORT")
@@ -129,7 +138,7 @@ func show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := layoutData(w, r).MergeKV("post", blogs[id], "id", id)
+	data := layoutData(w, r).MergeKV("post", blogs.Get(id))
 	err := templates.Render(w, "show", data)
 	if err != nil {
 		panic(err)
@@ -140,6 +149,8 @@ func new(w http.ResponseWriter, r *http.Request) {
 	data := layoutData(w, r).MergeKV("post", Blog{})
 	mustRender(w, "new", data)
 }
+
+var nextID = len(blogs) + 1
 
 func create(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -154,6 +165,8 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	b.ID = nextID
+	nextID++
 	b.Date = time.Now()
 	b.AuthorID = "Zeratul"
 
@@ -169,7 +182,7 @@ func edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := layoutData(w, r).MergeKV("post", blogs[id], "id", id)
+	data := layoutData(w, r).MergeKV("post", blogs.Get(id))
 	mustRender(w, "edit", data)
 }
 
@@ -186,16 +199,14 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Validation
 
-	var b = blogs[id]
-	if badRequest(w, schemaDec.Decode(&b, r.PostForm)) {
+	var b = blogs.Get(id)
+	if badRequest(w, schemaDec.Decode(b, r.PostForm)) {
 		return
 	}
 
 	b.Date = time.Now()
 
-	blogs[id] = b
-
-	data := layoutData(w, r).MergeKV("post", blogs[id], "id", id)
+	data := layoutData(w, r).MergeKV("post", b)
 	mustRender(w, "show", data)
 }
 
@@ -205,14 +216,7 @@ func destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(blogs) == 1 {
-		blogs = []Blog{}
-	} else {
-		for i := id; i < len(blogs)-1; i++ {
-			blogs[i], blogs[i+1] = blogs[i+1], blogs[i]
-		}
-		blogs = blogs[:len(blogs)-1]
-	}
+	blogs.Delete(id)
 
 	data := layoutData(w, r).MergeKV("posts", blogs)
 	mustRender(w, "index", data)
@@ -229,7 +233,7 @@ func blogID(w http.ResponseWriter, r *http.Request) (int, bool) {
 		return 0, false
 	}
 
-	if id < 0 || id >= len(blogs) {
+	if id <= 0 {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return 0, false
 	}

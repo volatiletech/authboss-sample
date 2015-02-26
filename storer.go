@@ -1,17 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/authboss.v0"
 )
 
+var nextUserID int
+
 type User struct {
-	Username           string    `bson:"username"`
-	Password           string    `bson:"password"`
-	Email              string    `bson:"email"`
-	RecoverToken       string    `bson:"recoverToken"`
-	RecoverTokenExpiry time.Time `bson:"recoverTokenExpiry"`
+	ID   int
+	Name string
+
+	// Auth
+	Email    string
+	Password string
+
+	// Confirm
+	ConfirmToken string
+	Confirmed    bool
+
+	// Lock
+	AttemptNumber int
+	AttemptTime   time.Time
+	Locked        bool
+
+	// Recover
+	RecoverToken       string
+	RecoverTokenExpiry time.Time
+
+	// Remember is in another table
 }
 
 type MemStorer struct {
@@ -22,7 +42,12 @@ type MemStorer struct {
 func NewMemStorer() *MemStorer {
 	return &MemStorer{
 		Users: map[string]User{
-			"user": User{"user", "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", "kris@test.com", "", time.Now().UTC()}, // pass = 1234
+			"zera@heroes.com": User{
+				ID:       1,
+				Name:     "Zeratul",
+				Password: "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
+				Email:    "zera@heroes.com",
+			},
 		},
 		Tokens: make(map[string]string),
 	}
@@ -30,11 +55,16 @@ func NewMemStorer() *MemStorer {
 
 func (s MemStorer) Create(key string, attr authboss.Attributes) error {
 	var user User
-	if err := attr.Bind(&user); err != nil {
+	if err := attr.Bind(&user, true); err != nil {
 		return err
 	}
 
+	user.ID = nextUserID
+	nextUserID++
+
 	s.Users[key] = user
+	fmt.Println("Create")
+	spew.Dump(s.Users)
 	return nil
 }
 
@@ -53,11 +83,15 @@ func (s MemStorer) Get(key string, attrMeta authboss.AttributeMeta) (result inte
 
 func (s MemStorer) AddToken(key, token string) error {
 	s.Tokens[key] = token
+	fmt.Println("AddToken")
+	spew.Dump(s.Tokens)
 	return nil
 }
 
 func (s MemStorer) DelTokens(key string) error {
 	delete(s.Tokens, key)
+	fmt.Println("DelTokens")
+	spew.Dump(s.Tokens)
 	return nil
 }
 
@@ -69,6 +103,16 @@ func (s MemStorer) UseToken(givenKey, token string) (key string, err error) {
 
 	s.DelTokens(givenKey)
 	return t, nil
+}
+
+func (s MemStorer) ConfirmUser(tok string) (result interface{}, err error) {
+	for _, u := range s.Users {
+		if u.ConfirmToken == tok {
+			return u, nil
+		}
+	}
+
+	return nil, authboss.ErrUserNotFound
 }
 
 func (s MemStorer) RecoverUser(rec string) (result interface{}, err error) {

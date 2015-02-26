@@ -11,11 +11,11 @@
 		</tr>
 	</thead>
 	<tbody>
-	{{range $i, $post := .posts}}
+	{{range .posts}}
 		<tr>
-			<td><a href="/blogs/{{$i}}">{{$post.Title}}</td>
-			<td>{{$post.AuthorID}}</td>
-			<td>{{formatDate $post.Date}}</td>
+			<td><a href="/blogs/{{.ID}}">{{.Title}}</td>
+			<td>{{.AuthorID}}</td>
+			<td>{{formatDate .Date}}</td>
 		</tr>
 	{{end}}
 </table>

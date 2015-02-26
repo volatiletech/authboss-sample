@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/justinas/nosurf"
+	"gopkg.in/authboss.v0/expire"
 )
 
 func nosurfing(h http.Handler) http.Handler {
@@ -28,4 +29,8 @@ func logger(h http.Handler) http.Handler {
 		os.Stdout.Write(b)
 		h.ServeHTTP(w, r)
 	})
+}
+
+func touch(h http.Handler) http.Handler {
+	return expire.Middleware(NewSessionStorer, h)
 }
