@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"os"
 
 	"github.com/justinas/nosurf"
 	"gopkg.in/authboss.v0/expire"
@@ -22,11 +20,26 @@ func nosurfing(h http.Handler) http.Handler {
 
 func logger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, err := httputil.DumpRequest(r, true)
-		if err != nil {
-			fmt.Println("What:", err)
+		fmt.Printf("%s %s %s\n", r.Method, r.URL.Path, r.Proto)
+		session, err := sessionStore.Get(r, "derpasaurous")
+		if err == nil {
+			fmt.Print("Session: ")
+			first := true
+			for k, v := range session.Values {
+				if first {
+					first = false
+				} else {
+					fmt.Print(", ")
+				}
+				fmt.Printf("%s = %v", k, v)
+			}
+			fmt.Println()
 		}
-		os.Stdout.Write(b)
+		fmt.Print("Database: ")
+		for _, u := range database.Users {
+			fmt.Printf("%s: Confirmed: %v ConfirmToken: %v AttemptN: %v AttemptT: %v Locked: %v RecoverTok: %v RecoverExp: %v\n",
+				u.Email, u.Confirmed, u.ConfirmToken, u.AttemptNumber, u.AttemptTime, u.Locked, u.RecoverToken, u.RecoverTokenExpiry)
+		}
 		h.ServeHTTP(w, r)
 	})
 }

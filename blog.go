@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"strconv"
 	"time"
@@ -37,8 +36,14 @@ var funcs = template.FuncMap{
 	"yield": func() string { return "" },
 }
 
+var (
+	database  = NewMemStorer()
+	templates = tpl.Must(tpl.Load("views", "views/partials", "layout.html.tpl", funcs))
+	schemaDec = schema.NewDecoder()
+)
+
 func setupAuthboss() {
-	ab.Cfg.Storer = NewMemStorer()
+	ab.Cfg.Storer = database
 	ab.Cfg.MountPath = "/auth"
 	ab.Cfg.LogWriter = os.Stdout
 	ab.Cfg.HostName = "localhost:3000"
@@ -60,17 +65,13 @@ func setupAuthboss() {
 	ab.Cfg.CookieStoreMaker = NewCookieStorer
 	ab.Cfg.SessionStoreMaker = NewSessionStorer
 
-	ab.Cfg.Mailer = ab.SMTPMailer("smtp.gmail.com:587", smtp.PlainAuth("bits128@gmail.com", "bits128@gmail.com", "fbzyhhlgrcyxwkqz", "smtp.gmail.com"))
+	//ab.Cfg.Mailer = ab.SMTPMailer("smtp.gmail.com:587", smtp.PlainAuth("bits128@gmail.com", "bits128@gmail.com", "fbzyhhlgrcyxwkqz", "smtp.gmail.com"))
+	ab.Cfg.Mailer = ab.LogMailer(os.Stdout)
 
 	if err := ab.Init(); err != nil {
 		log.Fatal(err)
 	}
 }
-
-var (
-	templates = tpl.Must(tpl.Load("views", "views/partials", "layout.html.tpl", funcs))
-	schemaDec = schema.NewDecoder()
-)
 
 func main() {
 	// Initialize Sessions and Cookies
