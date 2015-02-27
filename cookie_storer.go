@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/securecookie"
 	"gopkg.in/authboss.v0"
@@ -41,9 +42,10 @@ func (s CookieStorer) Put(key, value string) {
 	}
 
 	cookie := &http.Cookie{
-		Name:  key,
-		Value: encoded,
-		Path:  "/",
+		Expires: time.Now().UTC().AddDate(1, 0, 0),
+		Name:    key,
+		Value:   encoded,
+		Path:    "/",
 	}
 	http.SetCookie(s.w, cookie)
 }

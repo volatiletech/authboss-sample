@@ -43,6 +43,7 @@ var (
 )
 
 func setupAuthboss() {
+	ab.Cfg = ab.NewConfig()
 	ab.Cfg.Storer = database
 	ab.Cfg.MountPath = "/auth"
 	ab.Cfg.LogWriter = os.Stdout
@@ -121,12 +122,19 @@ func main() {
 }
 
 func layoutData(w http.ResponseWriter, r *http.Request) ab.HTMLData {
+	currentUserName := ""
+	userInter, err := ab.CurrentUser(w, r)
+	if userInter != nil && err == nil {
+		currentUserName = userInter.(User).Name
+	}
+
 	return ab.HTMLData{
-		"loggedin":         false,
-		"username":         "",
-		ab.FlashSuccessKey: ab.FlashSuccess(w, r),
-		ab.FlashErrorKey:   ab.FlashError(w, r),
-		"csrf_token":       nosurf.Token(r),
+		"loggedin":          userInter != nil,
+		"username":          "",
+		ab.FlashSuccessKey:  ab.FlashSuccess(w, r),
+		ab.FlashErrorKey:    ab.FlashError(w, r),
+		"csrf_token":        nosurf.Token(r),
+		"current_user_name": currentUserName,
 	}
 }
 
