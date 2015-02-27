@@ -106,6 +106,8 @@ func (s MemStorer) UseToken(givenKey, token string) (key string, err error) {
 }
 
 func (s MemStorer) ConfirmUser(tok string) (result interface{}, err error) {
+	fmt.Println("==============", tok)
+
 	for _, u := range s.Users {
 		if u.ConfirmToken == tok {
 			return u, nil

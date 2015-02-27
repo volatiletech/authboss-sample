@@ -20,7 +20,7 @@ func nosurfing(h http.Handler) http.Handler {
 
 func logger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%s %s %s\n", r.Method, r.URL.Path, r.Proto)
+		fmt.Printf("\n%s %s %s\n", r.Method, r.URL.Path, r.Proto)
 		session, err := sessionStore.Get(r, "derpasaurous")
 		if err == nil {
 			fmt.Print("Session: ")

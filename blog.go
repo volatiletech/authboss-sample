@@ -46,7 +46,7 @@ func setupAuthboss() {
 	ab.Cfg.Storer = database
 	ab.Cfg.MountPath = "/auth"
 	ab.Cfg.LogWriter = os.Stdout
-	ab.Cfg.HostName = "localhost:3000"
+	ab.Cfg.HostName = `http://localhost:3000`
 
 	ab.Cfg.LayoutDataMaker = layoutData
 
@@ -122,9 +122,11 @@ func main() {
 
 func layoutData(w http.ResponseWriter, r *http.Request) ab.HTMLData {
 	return ab.HTMLData{
-		"loggedin":   false,
-		"username":   "",
-		"csrf_token": nosurf.Token(r),
+		"loggedin":         false,
+		"username":         "",
+		ab.FlashSuccessKey: ab.FlashSuccess(w, r),
+		ab.FlashErrorKey:   ab.FlashError(w, r),
+		"csrf_token":       nosurf.Token(r),
 	}
 }
 
