@@ -14,7 +14,6 @@ import (
 	ab "gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
 	_ "gopkg.in/authboss.v0/confirm"
-	_ "gopkg.in/authboss.v0/expire"
 	_ "gopkg.in/authboss.v0/lock"
 	_ "gopkg.in/authboss.v0/recover"
 	_ "gopkg.in/authboss.v0/register"
@@ -111,7 +110,7 @@ func main() {
 	})
 
 	// Set up our middleware chain
-	stack := alice.New(logger /*, nosurfing*/, touch).Then(mux)
+	stack := alice.New(logger /*, nosurfing*/, ab.ExpireMiddleware).Then(mux)
 
 	// Start the server
 	port := os.Getenv("PORT")

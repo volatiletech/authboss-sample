@@ -42,11 +42,11 @@ type MemStorer struct {
 func NewMemStorer() *MemStorer {
 	return &MemStorer{
 		Users: map[string]User{
-			"zera@heroes.com": User{
+			"a": User{
 				ID:        1,
 				Name:      "Zeratul",
 				Password:  "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
-				Email:     "zera@heroes.com",
+				Email:     "a",
 				Confirmed: true,
 			},
 		},
