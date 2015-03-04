@@ -79,7 +79,7 @@ func (s MemStorer) Get(key string, attrMeta authboss.AttributeMeta) (result inte
 		return nil, authboss.ErrUserNotFound
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func (s MemStorer) AddToken(key, token string) error {
@@ -111,7 +111,7 @@ func (s MemStorer) ConfirmUser(tok string) (result interface{}, err error) {
 
 	for _, u := range s.Users {
 		if u.ConfirmToken == tok {
-			return u, nil
+			return &u, nil
 		}
 	}
 
@@ -121,7 +121,7 @@ func (s MemStorer) ConfirmUser(tok string) (result interface{}, err error) {
 func (s MemStorer) RecoverUser(rec string) (result interface{}, err error) {
 	for _, u := range s.Users {
 		if u.RecoverToken == rec {
-			return u, nil
+			return &u, nil
 		}
 	}
 

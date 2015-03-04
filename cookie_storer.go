@@ -51,4 +51,10 @@ func (s CookieStorer) Put(key, value string) {
 }
 
 func (s CookieStorer) Del(key string) {
+	cookie := &http.Cookie{
+		MaxAge: -1,
+		Name:   key,
+		Path:   "/",
+	}
+	http.SetCookie(s.w, cookie)
 }

@@ -124,7 +124,7 @@ func layoutData(w http.ResponseWriter, r *http.Request) ab.HTMLData {
 	currentUserName := ""
 	userInter, err := ab.CurrentUser(w, r)
 	if userInter != nil && err == nil {
-		currentUserName = userInter.(User).Name
+		currentUserName = userInter.(*User).Name
 	}
 
 	return ab.HTMLData{
