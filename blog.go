@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -50,7 +51,7 @@ func setupAuthboss() {
 
 	ab.Cfg.LayoutDataMaker = layoutData
 
-	b, err := ioutil.ReadFile(`views\layout.html.tpl`)
+	b, err := ioutil.ReadFile(filepath.Join("views", "layout.html.tpl"))
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +66,7 @@ func setupAuthboss() {
 	ab.Cfg.CookieStoreMaker = NewCookieStorer
 	ab.Cfg.SessionStoreMaker = NewSessionStorer
 
-	//ab.Cfg.Mailer = ab.SMTPMailer("smtp.gmail.com:587", smtp.PlainAuth("bits128@gmail.com", "bits128@gmail.com", "fbzyhhlgrcyxwkqz", "smtp.gmail.com"))
+	//ab.Cfg.Mailer = ab.SMTPMailer("smtp.gmail.com:587", smtp.PlainAuth("you@gmail.com", "you@gmail.com", "password", "smtp.gmail.com"))
 	ab.Cfg.Mailer = ab.LogMailer(os.Stdout)
 
 	if err := ab.Init(); err != nil {
@@ -110,7 +111,7 @@ func main() {
 	})
 
 	// Set up our middleware chain
-	stack := alice.New(logger /*, nosurfing*/, ab.ExpireMiddleware).Then(mux)
+	stack := alice.New(logger, nosurfing, ab.ExpireMiddleware).Then(mux)
 
 	// Start the server
 	port := os.Getenv("PORT")
