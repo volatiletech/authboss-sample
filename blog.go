@@ -46,6 +46,7 @@ func setupAuthboss() {
 	ab.Cfg = ab.NewConfig()
 	ab.Cfg.Storer = database
 	ab.Cfg.MountPath = "/auth"
+	ab.Cfg.ViewsPath = "ab_views"
 	ab.Cfg.LogWriter = os.Stdout
 	ab.Cfg.HostName = `http://localhost:3000`
 
@@ -56,7 +57,6 @@ func setupAuthboss() {
 		panic(err)
 	}
 	ab.Cfg.Layout = template.Must(template.New("layout").Funcs(funcs).Parse(string(b)))
-	//ab.Cfg.LayoutEmail = template.Must(template.New("layout").Parse(`{{template "authboss" .}}`))
 
 	ab.Cfg.XSRFName = "csrf_token"
 	ab.Cfg.XSRFMaker = func(_ http.ResponseWriter, r *http.Request) string {
@@ -66,7 +66,6 @@ func setupAuthboss() {
 	ab.Cfg.CookieStoreMaker = NewCookieStorer
 	ab.Cfg.SessionStoreMaker = NewSessionStorer
 
-	//ab.Cfg.Mailer = ab.SMTPMailer("smtp.gmail.com:587", smtp.PlainAuth("you@gmail.com", "you@gmail.com", "password", "smtp.gmail.com"))
 	ab.Cfg.Mailer = ab.LogMailer(os.Stdout)
 
 	if err := ab.Init(); err != nil {
@@ -94,7 +93,6 @@ func main() {
 
 	gets.HandleFunc("/blogs/new", new)
 	gets.HandleFunc("/blogs/{id}/edit", edit)
-	gets.HandleFunc("/blogs/{id}", show)
 	gets.HandleFunc("/blogs", index)
 	gets.HandleFunc("/", index)
 
@@ -143,19 +141,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 	mustRender(w, "index", data)
 }
 
-func show(w http.ResponseWriter, r *http.Request) {
-	id, ok := blogID(w, r)
-	if !ok {
-		return
-	}
-
-	data := layoutData(w, r).MergeKV("post", blogs.Get(id))
-	err := templates.Render(w, "show", data)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func new(w http.ResponseWriter, r *http.Request) {
 	data := layoutData(w, r).MergeKV("post", Blog{})
 	mustRender(w, "new", data)
@@ -183,8 +168,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 
 	blogs = append(blogs, b)
 
-	data := layoutData(w, r).MergeKV("post", b)
-	mustRender(w, "show", data)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func edit(w http.ResponseWriter, r *http.Request) {
@@ -217,8 +201,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	b.Date = time.Now()
 
-	data := layoutData(w, r).MergeKV("post", b)
-	mustRender(w, "show", data)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func destroy(w http.ResponseWriter, r *http.Request) {
@@ -229,8 +212,7 @@ func destroy(w http.ResponseWriter, r *http.Request) {
 
 	blogs.Delete(id)
 
-	data := layoutData(w, r).MergeKV("posts", blogs)
-	mustRender(w, "index", data)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func blogID(w http.ResponseWriter, r *http.Request) (int, bool) {
