@@ -18,6 +18,13 @@ type User struct {
 	Email    string
 	Password string
 
+	// OAuth2
+	Oauth2Uid      string
+	Oauth2Provider string
+	Oauth2Token    string
+	Oauth2Refresh  string
+	Oauth2Expiry   time.Time
+
 	// Confirm
 	ConfirmToken string
 	Confirmed    bool
@@ -75,6 +82,19 @@ func (s MemStorer) Put(key string, attr authboss.Attributes) error {
 
 func (s MemStorer) Get(key string, attrMeta authboss.AttributeMeta) (result interface{}, err error) {
 	user, ok := s.Users[key]
+	if !ok {
+		return nil, authboss.ErrUserNotFound
+	}
+
+	return &user, nil
+}
+
+func (s MemStorer) PutOAuth(uid, provider string, attr authboss.Attributes) error {
+	return s.Create(uid+provider, attr)
+}
+
+func (s MemStorer) GetOAuth(uid, provider string, attrMeta authboss.AttributeMeta) (result interface{}, err error) {
+	user, ok := s.Users[uid+provider]
 	if !ok {
 		return nil, authboss.ErrUserNotFound
 	}

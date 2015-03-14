@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/oauth2"
 	ab "gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
 	_ "gopkg.in/authboss.v0/confirm"
@@ -45,12 +46,25 @@ var (
 func setupAuthboss() {
 	ab.Cfg = ab.NewConfig()
 	ab.Cfg.Storer = database
+	ab.Cfg.OAuth2Storer = database
 	ab.Cfg.MountPath = "/auth"
 	ab.Cfg.ViewsPath = "ab_views"
 	ab.Cfg.LogWriter = os.Stdout
-	ab.Cfg.HostName = `http://localhost:3000`
+	ab.Cfg.RootURL = `http://localhost:3000`
 
 	ab.Cfg.LayoutDataMaker = layoutData
+
+	ab.Cfg.OAuth2Providers = map[string]ab.OAuthProvider{
+		"google": ab.OAuthProvider{
+			OAuth2Config: &oauth2.Config{
+				ClientID:     ``,
+				ClientSecret: ``,
+				Scopes:       []string{`profile`, `email`},
+				Endpoint:     aboauth.GoogleEndpoint,
+			},
+			Callback: aboauth.Google,
+		},
+	}
 
 	b, err := ioutil.ReadFile(filepath.Join("views", "layout.html.tpl"))
 	if err != nil {

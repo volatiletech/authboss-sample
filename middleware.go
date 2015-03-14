@@ -20,7 +20,7 @@ func nosurfing(h http.Handler) http.Handler {
 func logger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("\n%s %s %s\n", r.Method, r.URL.Path, r.Proto)
-		session, err := sessionStore.Get(r, "derpasaurous")
+		session, err := sessionStore.Get(r, sessionCookieName)
 		if err == nil {
 			fmt.Print("Session: ")
 			first := true
@@ -36,8 +36,7 @@ func logger(h http.Handler) http.Handler {
 		}
 		fmt.Print("Database: ")
 		for _, u := range database.Users {
-			fmt.Printf("%s: Confirmed: %v ConfirmToken: %v AttemptN: %v AttemptT: %v Locked: %v RecoverTok: %v RecoverExp: %v\n",
-				u.Email, u.Confirmed, u.ConfirmToken, u.AttemptNumber, u.AttemptTime, u.Locked, u.RecoverToken, u.RecoverTokenExpiry)
+			fmt.Printf("%#v\n", u)
 		}
 		h.ServeHTTP(w, r)
 	})
