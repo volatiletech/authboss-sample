@@ -48,7 +48,6 @@ func (s SessionStorer) Put(key, value string) {
 		return
 	}
 
-	fmt.Println("STORE", key, value)
 	session.Values[key] = value
 	session.Save(s.r, s.w)
 }

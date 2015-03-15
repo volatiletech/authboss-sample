@@ -32,7 +32,7 @@ type User struct {
 	// Lock
 	AttemptNumber int
 	AttemptTime   time.Time
-	Locked        bool
+	Locked        time.Time
 
 	// Recover
 	RecoverToken       string
@@ -43,7 +43,7 @@ type User struct {
 
 type MemStorer struct {
 	Users  map[string]User
-	Tokens map[string]string
+	Tokens map[string][]string
 }
 
 func NewMemStorer() *MemStorer {
@@ -57,7 +57,7 @@ func NewMemStorer() *MemStorer {
 				Confirmed: true,
 			},
 		},
-		Tokens: make(map[string]string),
+		Tokens: make(map[string][]string),
 	}
 }
 
@@ -80,7 +80,7 @@ func (s MemStorer) Put(key string, attr authboss.Attributes) error {
 	return s.Create(key, attr)
 }
 
-func (s MemStorer) Get(key string, attrMeta authboss.AttributeMeta) (result interface{}, err error) {
+func (s MemStorer) Get(key string) (result interface{}, err error) {
 	user, ok := s.Users[key]
 	if !ok {
 		return nil, authboss.ErrUserNotFound
@@ -93,7 +93,7 @@ func (s MemStorer) PutOAuth(uid, provider string, attr authboss.Attributes) erro
 	return s.Create(uid+provider, attr)
 }
 
-func (s MemStorer) GetOAuth(uid, provider string, attrMeta authboss.AttributeMeta) (result interface{}, err error) {
+func (s MemStorer) GetOAuth(uid, provider string) (result interface{}, err error) {
 	user, ok := s.Users[uid+provider]
 	if !ok {
 		return nil, authboss.ErrUserNotFound
@@ -103,7 +103,7 @@ func (s MemStorer) GetOAuth(uid, provider string, attrMeta authboss.AttributeMet
 }
 
 func (s MemStorer) AddToken(key, token string) error {
-	s.Tokens[key] = token
+	s.Tokens[key] = append(s.Tokens[key], token)
 	fmt.Println("AddToken")
 	spew.Dump(s.Tokens)
 	return nil
@@ -116,14 +116,21 @@ func (s MemStorer) DelTokens(key string) error {
 	return nil
 }
 
-func (s MemStorer) UseToken(givenKey, token string) (key string, err error) {
-	t, ok := s.Tokens[givenKey]
+func (s MemStorer) UseToken(givenKey, token string) error {
+	toks, ok := s.Tokens[givenKey]
 	if !ok {
-		return "", authboss.ErrTokenNotFound
+		return authboss.ErrTokenNotFound
 	}
 
-	s.DelTokens(givenKey)
-	return t, nil
+	for i, tok := range toks {
+		if tok == token {
+			toks[i], toks[len(toks)-1] = toks[len(toks)-1], toks[i]
+			s.Tokens[givenKey] = toks[:len(toks)-1]
+			return nil
+		}
+	}
+
+	return authboss.ErrTokenNotFound
 }
 
 func (s MemStorer) ConfirmUser(tok string) (result interface{}, err error) {

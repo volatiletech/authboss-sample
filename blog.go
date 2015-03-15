@@ -17,6 +17,7 @@ import (
 	_ "gopkg.in/authboss.v0/auth"
 	_ "gopkg.in/authboss.v0/confirm"
 	_ "gopkg.in/authboss.v0/lock"
+	aboauth "gopkg.in/authboss.v0/oauth2"
 	_ "gopkg.in/authboss.v0/recover"
 	_ "gopkg.in/authboss.v0/register"
 	_ "gopkg.in/authboss.v0/remember"
@@ -54,8 +55,8 @@ func setupAuthboss() {
 
 	ab.Cfg.LayoutDataMaker = layoutData
 
-	ab.Cfg.OAuth2Providers = map[string]ab.OAuthProvider{
-		"google": ab.OAuthProvider{
+	ab.Cfg.OAuth2Providers = map[string]ab.OAuth2Provider{
+		"google": ab.OAuth2Provider{
 			OAuth2Config: &oauth2.Config{
 				ClientID:     ``,
 				ClientSecret: ``,
@@ -145,7 +146,6 @@ func layoutData(w http.ResponseWriter, r *http.Request) ab.HTMLData {
 		"username":          "",
 		ab.FlashSuccessKey:  ab.FlashSuccess(w, r),
 		ab.FlashErrorKey:    ab.FlashError(w, r),
-		"csrf_token":        nosurf.Token(r),
 		"current_user_name": currentUserName,
 	}
 }
