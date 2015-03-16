@@ -45,7 +45,6 @@ var (
 )
 
 func setupAuthboss() {
-	ab.Cfg = ab.NewConfig()
 	ab.Cfg.Storer = database
 	ab.Cfg.OAuth2Storer = database
 	ab.Cfg.MountPath = "/auth"
