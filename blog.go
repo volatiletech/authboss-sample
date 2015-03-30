@@ -49,7 +49,6 @@ func setupAuthboss() {
 	ab.Cfg.OAuth2Storer = database
 	ab.Cfg.MountPath = "/auth"
 	ab.Cfg.ViewsPath = "ab_views"
-	ab.Cfg.LogWriter = os.Stdout
 	ab.Cfg.RootURL = `http://localhost:3000`
 
 	ab.Cfg.LayoutDataMaker = layoutData
