@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
-	ab "gopkg.in/authboss.v0"
+	"gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
 	_ "gopkg.in/authboss.v0/confirm"
 	_ "gopkg.in/authboss.v0/lock"
@@ -39,22 +39,23 @@ var funcs = template.FuncMap{
 }
 
 var (
+	ab        = authboss.New()
 	database  = NewMemStorer()
 	templates = tpl.Must(tpl.Load("views", "views/partials", "layout.html.tpl", funcs))
 	schemaDec = schema.NewDecoder()
 )
 
 func setupAuthboss() {
-	ab.Cfg.Storer = database
-	ab.Cfg.OAuth2Storer = database
-	ab.Cfg.MountPath = "/auth"
-	ab.Cfg.ViewsPath = "ab_views"
-	ab.Cfg.RootURL = `http://localhost:3000`
+	ab.Storer = database
+	ab.OAuth2Storer = database
+	ab.MountPath = "/auth"
+	ab.ViewsPath = "ab_views"
+	ab.RootURL = `http://localhost:3000`
 
-	ab.Cfg.LayoutDataMaker = layoutData
+	ab.LayoutDataMaker = layoutData
 
-	ab.Cfg.OAuth2Providers = map[string]ab.OAuth2Provider{
-		"google": ab.OAuth2Provider{
+	ab.OAuth2Providers = map[string]authboss.OAuth2Provider{
+		"google": authboss.OAuth2Provider{
 			OAuth2Config: &oauth2.Config{
 				ClientID:     ``,
 				ClientSecret: ``,
@@ -69,17 +70,17 @@ func setupAuthboss() {
 	if err != nil {
 		panic(err)
 	}
-	ab.Cfg.Layout = template.Must(template.New("layout").Funcs(funcs).Parse(string(b)))
+	ab.Layout = template.Must(template.New("layout").Funcs(funcs).Parse(string(b)))
 
-	ab.Cfg.XSRFName = "csrf_token"
-	ab.Cfg.XSRFMaker = func(_ http.ResponseWriter, r *http.Request) string {
+	ab.XSRFName = "csrf_token"
+	ab.XSRFMaker = func(_ http.ResponseWriter, r *http.Request) string {
 		return nosurf.Token(r)
 	}
 
-	ab.Cfg.CookieStoreMaker = NewCookieStorer
-	ab.Cfg.SessionStoreMaker = NewSessionStorer
+	ab.CookieStoreMaker = NewCookieStorer
+	ab.SessionStoreMaker = NewSessionStorer
 
-	ab.Cfg.Mailer = ab.LogMailer(os.Stdout)
+	ab.Mailer = authboss.LogMailer(os.Stdout)
 
 	if err := ab.Init(); err != nil {
 		log.Fatal(err)
@@ -132,19 +133,19 @@ func main() {
 	log.Println(http.ListenAndServe("localhost:"+port, stack))
 }
 
-func layoutData(w http.ResponseWriter, r *http.Request) ab.HTMLData {
+func layoutData(w http.ResponseWriter, r *http.Request) authboss.HTMLData {
 	currentUserName := ""
 	userInter, err := ab.CurrentUser(w, r)
 	if userInter != nil && err == nil {
 		currentUserName = userInter.(*User).Name
 	}
 
-	return ab.HTMLData{
-		"loggedin":          userInter != nil,
-		"username":          "",
-		ab.FlashSuccessKey:  ab.FlashSuccess(w, r),
-		ab.FlashErrorKey:    ab.FlashError(w, r),
-		"current_user_name": currentUserName,
+	return authboss.HTMLData{
+		"loggedin":               userInter != nil,
+		"username":               "",
+		authboss.FlashSuccessKey: ab.FlashSuccess(w, r),
+		authboss.FlashErrorKey:   ab.FlashError(w, r),
+		"current_user_name":      currentUserName,
 	}
 }
 
