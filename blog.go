@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
@@ -89,8 +90,24 @@ func setupAuthboss() {
 
 func main() {
 	// Initialize Sessions and Cookies
-	cookieStore = securecookie.New([]byte("very-secret"), nil)
-	sessionStore = sessions.NewCookieStore([]byte("asdf"))
+	// Typically gorilla securecookie and sessions packages require
+	// highly random secret keys that are not divulged to the public.
+	//
+	// In this example we use keys generated one time (if these keys ever become
+	// compromised the gorilla libraries allow for key rotation, see gorilla docs)
+	// The keys are 64-bytes as recommended for HMAC keys as per the gorilla docs.
+	//
+	// The following code was used to generate these:
+	//    func main() {
+	//        fmt.Println(base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64)))
+	//    }
+	//
+	// We store them in base64 in the example to make it easy if we wanted to move them later to
+	// a configuration environment var or file.
+	cookieStoreKey, _ := base64.StdEncoding.DecodeString(`NpEPi8pEjKVjLGJ6kYCS+VTCzi6BUuDzU0wrwXyf5uDPArtlofn2AG6aTMiPmN3C909rsEWMNqJqhIVPGP3Exg==`)
+	sessionStoreKey, _ := base64.StdEncoding.DecodeString(`AbfYwmmt8UCwUuhd9qvfNA9UCuN1cVcKJN1ofbiky6xCyyBj20whe40rJa3Su0WOWLWcPpO1taqJdsEI/65+JA==`)
+	cookieStore = securecookie.New(cookieStoreKey, nil)
+	sessionStore = sessions.NewCookieStore(sessionStoreKey)
 
 	// Initialize ab.
 	setupAuthboss()
