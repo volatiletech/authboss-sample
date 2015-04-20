@@ -1,6 +1,6 @@
 <div class="row">
 	<div class="col-md-offset-1 col-md-10">
-		<form action="/blogs{{with .post.ID}}/{{.}}{{end}}" method="post">
+		<form action="/blogs{{with .post.ID}}/{{.}}/edit{{else}}/new{{end}}" method="post">
 			<div class="form-group">
 				<label for="title">Title</label>
 				<input class="form-control" name="title" type="text" value="{{with .post}}{{.Title}}{{end}}"></input>

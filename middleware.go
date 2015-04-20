@@ -8,6 +8,26 @@ import (
 	"github.com/justinas/nosurf"
 )
 
+type authProtector struct {
+	f http.HandlerFunc
+}
+
+func authProtect(f http.HandlerFunc) authProtector {
+	return authProtector{f}
+}
+
+func (ap authProtector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if u, err := ab.CurrentUser(w, r); err != nil {
+		log.Println("Error fetching current user:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	} else if u == nil {
+		log.Println("Redirecting unauthorized user from:", r.URL.Path)
+		http.Redirect(w, r, "/", http.StatusFound)
+	} else {
+		ap.f(w, r)
+	}
+}
+
 func nosurfing(h http.Handler) http.Handler {
 	surfing := nosurf.New(h)
 	surfing.SetFailureHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

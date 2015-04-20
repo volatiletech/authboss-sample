@@ -122,15 +122,15 @@ func main() {
 
 	mux.PathPrefix("/auth").Handler(ab.NewRouter())
 
-	gets.HandleFunc("/blogs/new", new)
-	gets.HandleFunc("/blogs/{id}/edit", edit)
+	gets.Handle("/blogs/new", authProtect(newblog))
+	gets.Handle("/blogs/{id}/edit", authProtect(edit))
 	gets.HandleFunc("/blogs", index)
 	gets.HandleFunc("/", index)
 
-	posts.HandleFunc("/blogs/{id}", update)
-	posts.HandleFunc("/blogs", create)
+	posts.Handle("/blogs/{id}/edit", authProtect(update))
+	posts.Handle("/blogs/new", authProtect(create))
 
-	// This should actually be a destroys.X but I can't be bothered to make a proper
+	// This should actually be a DELETE but I can't be bothered to make a proper
 	// destroy link using javascript atm.
 	gets.HandleFunc("/blogs/{id}/destroy", destroy)
 
@@ -168,12 +168,12 @@ func layoutData(w http.ResponseWriter, r *http.Request) authboss.HTMLData {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	data := layoutData(w, r).MergeKV("posts", blogs)
-	mustRender(w, "index", data)
+	mustRender(w, r, "index", data)
 }
 
-func new(w http.ResponseWriter, r *http.Request) {
+func newblog(w http.ResponseWriter, r *http.Request) {
 	data := layoutData(w, r).MergeKV("post", Blog{})
-	mustRender(w, "new", data)
+	mustRender(w, r, "new", data)
 }
 
 var nextID = len(blogs) + 1
@@ -208,7 +208,7 @@ func edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := layoutData(w, r).MergeKV("post", blogs.Get(id))
-	mustRender(w, "edit", data)
+	mustRender(w, r, "edit", data)
 }
 
 func update(w http.ResponseWriter, r *http.Request) {
@@ -264,7 +264,8 @@ func blogID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	return id, true
 }
 
-func mustRender(w http.ResponseWriter, name string, data interface{}) {
+func mustRender(w http.ResponseWriter, r *http.Request, name string, data authboss.HTMLData) {
+	data.MergeKV("csrf_token", nosurf.Token(r))
 	err := templates.Render(w, name, data)
 	if err == nil {
 		return
