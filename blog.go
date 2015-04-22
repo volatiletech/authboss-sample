@@ -97,7 +97,11 @@ func main() {
 	// compromised the gorilla libraries allow for key rotation, see gorilla docs)
 	// The keys are 64-bytes as recommended for HMAC keys as per the gorilla docs.
 	//
-	// The following code was used to generate these:
+	// TODO: These values MUST be changed for any new project as these keys are already "compromised"
+	// as they're in the public domain, if you do not change these your application will have a fairly
+	// wide-opened security hole. You can generate your own with the code below, or using whatever method
+	// you prefer:
+	//
 	//    func main() {
 	//        fmt.Println(base64.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64)))
 	//    }
