@@ -83,6 +83,21 @@ func setupAuthboss() {
 
 	ab.Mailer = authboss.LogMailer(os.Stdout)
 
+	ab.Policies = []authboss.Validator{
+		authboss.Rules{
+			FieldName:       "email",
+			Required:        true,
+			AllowWhitespace: false,
+		},
+		authboss.Rules{
+			FieldName:       "password",
+			Required:        true,
+			MinLength:       4,
+			MaxLength:       8,
+			AllowWhitespace: false,
+		},
+	}
+
 	if err := ab.Init(); err != nil {
 		log.Fatal(err)
 	}
