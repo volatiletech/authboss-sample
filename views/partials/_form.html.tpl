@@ -9,7 +9,7 @@
 				<label for="content">Content</label><br />
 				<textarea class="form-control" name="content" cols="100" rows="5">{{with .post}}{{.Content}}{{end}}</textarea>
 			</div>
-			<input type="hidden" name="crsf_token" value="{{.csrf_token}}" />
+			<input type="hidden" name="csrf_token" value="{{.csrf_token}}" />
 			<div class="row text-right">
 				{{with .post.ID}}
 				<button class="btn btn-success" type="submit">Edit</button>
