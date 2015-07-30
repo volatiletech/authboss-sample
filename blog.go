@@ -159,7 +159,7 @@ func main() {
 	})
 
 	// Set up our middleware chain
-	stack := alice.New(logger /*nosurfing,*/, ab.ExpireMiddleware).Then(mux)
+	stack := alice.New(logger, nosurfing, ab.ExpireMiddleware).Then(mux)
 
 	// Start the server
 	port := os.Getenv("PORT")
