@@ -30,7 +30,7 @@ type User struct {
 	Confirmed    bool
 
 	// Lock
-	AttemptNumber int
+	AttemptNumber int64
 	AttemptTime   time.Time
 	Locked        time.Time
 
