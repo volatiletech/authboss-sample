@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"gopkg.in/authboss.v0"
 	_ "gopkg.in/authboss.v0/auth"
 	_ "gopkg.in/authboss.v0/confirm"
@@ -61,7 +62,7 @@ func setupAuthboss() {
 				ClientID:     ``,
 				ClientSecret: ``,
 				Scopes:       []string{`profile`, `email`},
-				Endpoint:     aboauth.GoogleEndpoint,
+				Endpoint:     google.Endpoint,
 			},
 			Callback: aboauth.Google,
 		},
