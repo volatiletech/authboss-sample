@@ -152,7 +152,7 @@ func main() {
 
 	// This should actually be a DELETE but I can't be bothered to make a proper
 	// destroy link using javascript atm.
-	gets.HandleFunc("/blogs/{id}/destroy", destroy)
+	gets.Handle("/blogs/{id}/destroy", authProtect(destroy))
 
 	mux.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
