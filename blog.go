@@ -52,15 +52,19 @@ func setupAuthboss() {
 	ab.OAuth2Storer = database
 	ab.MountPath = "/auth"
 	ab.ViewsPath = "ab_views"
-	ab.RootURL = `http://localhost:3000`
+	ab.RootURL = os.Getenv("URL")
+
+	if len(ab.RootURL) == 0 {
+		ab.RootURL = "http://localhost:3000"
+	}
 
 	ab.LayoutDataMaker = layoutData
 
 	ab.OAuth2Providers = map[string]authboss.OAuth2Provider{
 		"google": authboss.OAuth2Provider{
 			OAuth2Config: &oauth2.Config{
-				ClientID:     ``,
-				ClientSecret: ``,
+				ClientID: os.Getenv("GOOGLE_CLIENT_ID"),
+				ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 				Scopes:       []string{`profile`, `email`},
 				Endpoint:     google.Endpoint,
 			},
@@ -163,18 +167,22 @@ func main() {
 	stack := alice.New(logger, nosurfing, ab.ExpireMiddleware).Then(mux)
 
 	// Start the server
+	host := os.Getenv("HOST")
+	if len(host) == 0 {
+		host = "localhost"
+	}
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "3000"
 	}
-	log.Println(http.ListenAndServe("localhost:"+port, stack))
+	log.Println(http.ListenAndServe(host+":"+port, stack))
 }
 
 func layoutData(w http.ResponseWriter, r *http.Request) authboss.HTMLData {
 	currentUserName := ""
 	userInter, err := ab.CurrentUser(w, r)
 	if userInter != nil && err == nil {
-		currentUserName = userInter.(*User).Name
+		currentUserName = userInter.(*User).Email
 	}
 
 	return authboss.HTMLData{
