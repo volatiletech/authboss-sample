@@ -31,8 +31,11 @@
 						</div>
 					</div>
 					{{end}}
+
+
 				</form>
 			</div>
+            <a href="/auth/oauth2/google">Google Auth</a>
 		</div>
 	</div>
 </div>
