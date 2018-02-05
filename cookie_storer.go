@@ -11,50 +11,73 @@ import (
 
 var cookieStore *securecookie.SecureCookie
 
-type CookieStorer struct {
-	w http.ResponseWriter
-	r *http.Request
+// Cookies is a struct to hold cookies for the duration of the request
+type Cookies struct {
+	cookies map[string]*http.Cookie
 }
 
-func NewCookieStorer(w http.ResponseWriter, r *http.Request) authboss.ClientStorer {
-	return &CookieStorer{w, r}
+// Get a cookie's value
+func (c Cookies) Get(key string) (string, bool) {
+	if cookie, ok := c.cookies[key]; ok {
+		var value string
+		if err := cookieStore.Decode(cookie.Name, cookie.Value, &value); err != nil {
+			panic("COOKIE DECODE FAILURE:" + err.Error())
+		}
+
+		return value, true
+	}
+
+	return "", false
 }
 
-func (s CookieStorer) Get(key string) (string, bool) {
-	cookie, err := s.r.Cookie(key)
-	if err != nil {
-		return "", false
-	}
+// CookieStorer writes and reads cookies
+type CookieStorer struct{}
 
-	var value string
-	err = cookieStore.Decode(key, cookie.Value, &value)
-	if err != nil {
-		return "", false
-	}
-
-	return value, true
+// NewCookieStorer constructor
+func NewCookieStorer() *CookieStorer {
+	return &CookieStorer{}
 }
 
-func (s CookieStorer) Put(key, value string) {
-	encoded, err := cookieStore.Encode(key, value)
-	if err != nil {
-		fmt.Println(err)
+// ReadState from the request
+func (c CookieStorer) ReadState(w http.ResponseWriter, r *http.Request) (authboss.ClientState, error) {
+	cs := &Cookies{
+		cookies: make(map[string]*http.Cookie),
 	}
 
-	cookie := &http.Cookie{
-		Expires: time.Now().UTC().AddDate(1, 0, 0),
-		Name:    key,
-		Value:   encoded,
-		Path:    "/",
+	for _, c := range r.Cookies() {
+		cs.cookies[c.Name] = c
 	}
-	http.SetCookie(s.w, cookie)
+
+	return cs, nil
 }
 
-func (s CookieStorer) Del(key string) {
-	cookie := &http.Cookie{
-		MaxAge: -1,
-		Name:   key,
-		Path:   "/",
+// WriteState to the responsewriter
+func (c CookieStorer) WriteState(w http.ResponseWriter, state authboss.ClientState, ev []authboss.ClientStateEvent) error {
+	for _, ev := range ev {
+		switch ev.Kind {
+		case authboss.ClientStateEventPut:
+			encoded, err := cookieStore.Encode(ev.Key, ev.Value)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+
+			cookie := &http.Cookie{
+				Expires: time.Now().UTC().AddDate(1, 0, 0),
+				Name:    ev.Key,
+				Value:   encoded,
+				Path:    "/",
+			}
+			http.SetCookie(w, cookie)
+		case authboss.ClientStateEventDel:
+			cookie := &http.Cookie{
+				MaxAge: -1,
+				Name:   ev.Key,
+				Path:   "/",
+			}
+			http.SetCookie(w, cookie)
+		}
 	}
-	http.SetCookie(s.w, cookie)
+
+	return nil
 }

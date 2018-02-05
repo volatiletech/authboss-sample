@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"context"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/volatiletech/authboss"
 )
 
 var nextUserID int
 
+// User struct for authboss
 type User struct {
 	ID   int
 	Name string
@@ -18,77 +17,104 @@ type User struct {
 	Email    string
 	Password string
 
-	// OAuth2
-	Oauth2Uid      string
-	Oauth2Provider string
-	Oauth2Token    string
-	Oauth2Refresh  string
-	Oauth2Expiry   time.Time
+	/*
+		// OAuth2
+		Oauth2Uid      string
+		Oauth2Provider string
+		Oauth2Token    string
+		Oauth2Refresh  string
+		Oauth2Expiry   time.Time
 
-	// Confirm
-	ConfirmToken string
-	Confirmed    bool
+		// Confirm
+		ConfirmToken string
+		Confirmed    bool
 
-	// Lock
-	AttemptNumber int64
-	AttemptTime   time.Time
-	Locked        time.Time
+		// Lock
+		AttemptNumber int64
+		AttemptTime   time.Time
+		Locked        time.Time
 
-	// Recover
-	RecoverToken       string
-	RecoverTokenExpiry time.Time
+		// Recover
+		RecoverToken       string
+		RecoverTokenExpiry time.Time
 
-	// Remember is in another table
+		// Remember is in another table
+	*/
 }
 
+// PutPID into user
+func (u *User) PutPID(ctx context.Context, pid string) error {
+	u.Email = pid
+	return nil
+}
+
+// PutPassword into user
+func (u *User) PutPassword(ctx context.Context, password string) error {
+	u.Password = password
+	return nil
+}
+
+// GetPID from user
+func (u User) GetPID(ctx context.Context) (string, error) {
+	return u.Email, nil
+}
+
+// GetPassword from user
+func (u User) GetPassword(ctx context.Context) (string, error) {
+	return u.Password, nil
+}
+
+// MemStorer stores users in memory
 type MemStorer struct {
 	Users  map[string]User
 	Tokens map[string][]string
 }
 
+// NewMemStorer constructor
 func NewMemStorer() *MemStorer {
 	return &MemStorer{
 		Users: map[string]User{
-			"zeratul@heroes.com": User{
-				ID:        1,
-				Name:      "Zeratul",
-				Password:  "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
-				Email:     "zeratul@heroes.com",
-				Confirmed: true,
+			"rick@councilofricks.com": User{
+				ID:       1,
+				Name:     "Rick",
+				Password: "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
+				Email:    "rick@councilofricks.com",
+				//Confirmed: true,
 			},
 		},
 		Tokens: make(map[string][]string),
 	}
 }
 
-func (s MemStorer) Create(key string, attr authboss.Attributes) error {
-	var user User
-	if err := attr.Bind(&user, true); err != nil {
-		return err
-	}
+// ServerStorer represents the data store that's capable of loading users
+// and giving them a context with which to store themselves.
+type ServerStorer interface {
+	// Load will look up the user based on the passed the PrimaryID
+	Load(ctx context.Context, key string) (User, error)
 
-	user.ID = nextUserID
-	nextUserID++
+	// Save persists the user in the database
+	Save(ctx context.Context, user User) error
+}
 
-	s.Users[key] = user
-	fmt.Println("Create")
-	spew.Dump(s.Users)
+// Save the user
+func (s MemStorer) Save(ctx context.Context, user authboss.User) error {
+	u := user.(*User)
+	s.Users[u.Email] = *u
+
 	return nil
 }
 
-func (s MemStorer) Put(key string, attr authboss.Attributes) error {
-	return s.Create(key, attr)
-}
-
-func (s MemStorer) Get(key string) (result interface{}, err error) {
-	user, ok := s.Users[key]
+// Load the user
+func (s MemStorer) Load(ctx context.Context, key string) (user authboss.User, err error) {
+	u, ok := s.Users[key]
 	if !ok {
 		return nil, authboss.ErrUserNotFound
 	}
 
-	return &user, nil
+	return &u, nil
 }
 
+/*
 func (s MemStorer) PutOAuth(uid, provider string, attr authboss.Attributes) error {
 	return s.Create(uid+provider, attr)
 }
@@ -154,3 +180,4 @@ func (s MemStorer) RecoverUser(rec string) (result interface{}, err error) {
 
 	return nil, authboss.ErrUserNotFound
 }
+*/

@@ -13,14 +13,15 @@ type Blog struct {
 type Blogs []Blog
 
 var blogs = Blogs{
-	{1, "My first Hook", "Stitches", time.Now().AddDate(0, 0, -3),
-		`When I was young I was weak. But then I grew up and now I'm ridiculous` +
-			`because I can hook a whole team and destroy them with gorge lololo. ` +
-			`Look at me mom. I'm a big kid now!`,
+	{1, "My first portal", "Rick", time.Now().AddDate(0, 0, -3).Add(-time.Hour * 2),
+		`I successfully opened a portal to another dimension, I think it's pretty clear that I'm the smartest person on earth ` +
+			`and this'll let me go see if there's anything out in the verse that can compete with my tremendous intellect, after ` +
+			`dragging Morty along on a few adventures I think the answer is still a resounding: no.`,
 	},
-	{2, "Halp the nerfed!11", "Murky", time.Now().AddDate(0, 0, -1),
-		`I used to be really amazing, then they nerfed me, then I was really` +
-			`good in the right hands, now... I have no idea, why Blizzard? Why??!!`,
+	{2, "My Life", "Morty", time.Now().AddDate(0, 0, -1),
+		`My Grandpa is a really cool guy, but who I really think is great is Jessica. I keep staring at her in class hoping ` +
+			`that one day she'll realize just how great a guy she's missing out on. She doesn't need any of these bad ` +
+			`guys she keeps dating, that's only going to hurt her. I'm a whole lot of Morty, and I'm waiting for you Jessica.`,
 	},
 }
 

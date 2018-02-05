@@ -4,33 +4,24 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"github.com/go-chi/chi"
 	"github.com/volatiletech/authboss"
+	// Auth module for authboss
+	"github.com/volatiletech/authboss-renderer"
 	_ "github.com/volatiletech/authboss/auth"
-	_ "github.com/volatiletech/authboss/confirm"
-	_ "github.com/volatiletech/authboss/lock"
-	aboauth "github.com/volatiletech/authboss/oauth2"
-	_ "github.com/volatiletech/authboss/recover"
-	_ "github.com/volatiletech/authboss/register"
-	_ "github.com/volatiletech/authboss/remember"
+	"github.com/volatiletech/authboss/defaults"
 
 	"github.com/aarondl/tpl"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"github.com/justinas/alice"
-	"github.com/justinas/nosurf"
 )
 
 var funcs = template.FuncMap{
@@ -48,7 +39,21 @@ var (
 )
 
 func setupAuthboss() {
-	ab.Storer = database
+	ab.Config.Modules.AuthLogoutMethod = "GET"
+
+	ab.Config.Storage.Server = database
+	ab.Config.Storage.SessionState = NewSessionStorer()
+	ab.Config.Storage.CookieState = NewCookieStorer()
+
+	ab.Config.Core.ViewRenderer = abrenderer.New("/auth")
+
+	defaults.SetDefaultCore(&ab.Config, false)
+
+	if err := ab.Init(); err != nil {
+		panic(err)
+	}
+
+	/*ab.Storer = database
 	ab.OAuth2Storer = database
 	ab.MountPath = "/auth"
 	ab.ViewsPath = "ab_views"
@@ -101,7 +106,7 @@ func setupAuthboss() {
 
 	if err := ab.Init(); err != nil {
 		log.Fatal(err)
-	}
+	}*/
 }
 
 func main() {
@@ -134,40 +139,34 @@ func main() {
 
 	// Set up our router
 	schemaDec.IgnoreUnknownKeys(true)
-	mux := mux.NewRouter()
+
+	mux := chi.NewRouter()
+	mux.Use(ab.ClientStateMiddleware, logger) //, nosurfing)
 
 	// Routes
-	gets := mux.Methods("GET").Subrouter()
-	posts := mux.Methods("POST").Subrouter()
+	mux.Mount("/auth", http.StripPrefix("/auth", ab.Config.Core.Router))
 
-	mux.PathPrefix("/auth").Handler(ab.NewRouter())
+	mux.Method("GET", "/blogs/new", authProtect(newblog))
+	mux.Method("GET", "/blogs/{id}/edit", authProtect(edit))
 
-	gets.Handle("/blogs/new", authProtect(newblog))
-	gets.Handle("/blogs/{id}/edit", authProtect(edit))
-	gets.HandleFunc("/blogs", index)
-	gets.HandleFunc("/", index)
+	mux.Get("/blogs", index)
+	mux.Get("/", index)
 
-	posts.Handle("/blogs/{id}/edit", authProtect(update))
-	posts.Handle("/blogs/new", authProtect(create))
+	mux.Method("POST", "/blogs/{id}/edit", authProtect(update))
+	mux.Method("POST", "/blogs/new", authProtect(create))
 
 	// This should actually be a DELETE but I can't be bothered to make a proper
 	// destroy link using javascript atm.
-	gets.Handle("/blogs/{id}/destroy", authProtect(destroy))
-
-	mux.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		io.WriteString(w, "Not found")
-	})
+	mux.Method("GET", "/blogs/{id}/destroy", authProtect(destroy))
 
 	// Set up our middleware chain
-	stack := alice.New(logger, nosurfing, ab.ExpireMiddleware).Then(mux)
 
 	// Start the server
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "3000"
 	}
-	log.Println(http.ListenAndServe("localhost:"+port, stack))
+	log.Println(http.ListenAndServe("localhost:"+port, mux))
 }
 
 func layoutData(w http.ResponseWriter, r *http.Request) authboss.HTMLData {
@@ -178,12 +177,15 @@ func layoutData(w http.ResponseWriter, r *http.Request) authboss.HTMLData {
 	}
 
 	return authboss.HTMLData{
-		"loggedin":               userInter != nil,
-		"username":               "",
+		"loggedin":          userInter != nil,
+		"username":          "",
+		"current_user_name": currentUserName,
+	}
+	/*
 		authboss.FlashSuccessKey: ab.FlashSuccess(w, r),
 		authboss.FlashErrorKey:   ab.FlashError(w, r),
 		"current_user_name":      currentUserName,
-	}
+	}*/
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -214,7 +216,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 	b.ID = nextID
 	nextID++
 	b.Date = time.Now()
-	b.AuthorID = "Zeratul"
+	b.AuthorID = "Rick"
 
 	blogs = append(blogs, b)
 
@@ -285,7 +287,7 @@ func blogID(w http.ResponseWriter, r *http.Request) (int, bool) {
 }
 
 func mustRender(w http.ResponseWriter, r *http.Request, name string, data authboss.HTMLData) {
-	data.MergeKV("csrf_token", nosurf.Token(r))
+	//data.MergeKV("csrf_token", nosurf.Token(r))
 	err := templates.Render(w, name, data)
 	if err == nil {
 		return

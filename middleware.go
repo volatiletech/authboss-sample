@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/justinas/nosurf"
 )
 
@@ -12,8 +13,8 @@ type authProtector struct {
 	f http.HandlerFunc
 }
 
-func authProtect(f http.HandlerFunc) authProtector {
-	return authProtector{f}
+func authProtect(f func(w http.ResponseWriter, r *http.Request)) authProtector {
+	return authProtector{http.HandlerFunc(f)}
 }
 
 func (ap authProtector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +59,7 @@ func logger(h http.Handler) http.Handler {
 		for _, u := range database.Users {
 			fmt.Printf("%#v\n", u)
 		}
+		fmt.Printf("Context: %s\n", spew.Sdump(r.Context()))
 		h.ServeHTTP(w, r)
 	})
 }
