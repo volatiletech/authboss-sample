@@ -94,11 +94,20 @@ func (u *User) PutRecoverToken(token string) { u.RecoverToken = token }
 // PutRecoverExpiry into user
 func (u *User) PutRecoverExpiry(expiry time.Time) { u.RecoverTokenExpiry = expiry }
 
-func (u *User) PutOAuth2UID(uid string)                   { u.OAuth2UID = uid }
-func (u *User) PutOAuth2Provider(provider string)         { u.OAuth2Provider = provider }
-func (u *User) PutOAuth2AccessToken(token string)         { u.OAuth2AccessToken = token }
+// PutOAuth2UID into user
+func (u *User) PutOAuth2UID(uid string) { u.OAuth2UID = uid }
+
+// PutOAuth2Provider into user
+func (u *User) PutOAuth2Provider(provider string) { u.OAuth2Provider = provider }
+
+// PutOAuth2AccessToken into user
+func (u *User) PutOAuth2AccessToken(token string) { u.OAuth2AccessToken = token }
+
+// PutOAuth2RefreshToken into user
 func (u *User) PutOAuth2RefreshToken(refreshToken string) { u.OAuth2RefreshToken = refreshToken }
-func (u *User) PutOAuth2Expiry(expiry time.Time)          { u.OAuth2Expiry = expiry }
+
+// PutOAuth2Expiry into user
+func (u *User) PutOAuth2Expiry(expiry time.Time) { u.OAuth2Expiry = expiry }
 
 // PutArbitrary into user
 func (u *User) PutArbitrary(values map[string]string) {
@@ -144,12 +153,23 @@ func (u User) GetArbitrary() map[string]string {
 	}
 }
 
-func (u User) IsOAuth2User() bool                           { return len(u.OAuth2UID) != 0 }
-func (u User) GetOAuth2UID() (uid string)                   { return u.OAuth2UID }
-func (u User) GetOAuth2Provider() (provider string)         { return u.OAuth2Provider }
-func (u User) GetOAuth2AccessToken() (token string)         { return u.OAuth2AccessToken }
+// IsOAuth2User returns true if the user was created with oauth2
+func (u User) IsOAuth2User() bool { return len(u.OAuth2UID) != 0 }
+
+// GetOAuth2UID from user
+func (u User) GetOAuth2UID() (uid string) { return u.OAuth2UID }
+
+// GetOAuth2Provider from user
+func (u User) GetOAuth2Provider() (provider string) { return u.OAuth2Provider }
+
+// GetOAuth2AccessToken from user
+func (u User) GetOAuth2AccessToken() (token string) { return u.OAuth2AccessToken }
+
+// GetOAuth2RefreshToken from user
 func (u User) GetOAuth2RefreshToken() (refreshToken string) { return u.OAuth2RefreshToken }
-func (u User) GetOAuth2Expiry() (expiry time.Time)          { return u.OAuth2Expiry }
+
+// GetOAuth2Expiry from user
+func (u User) GetOAuth2Expiry() (expiry time.Time) { return u.OAuth2Expiry }
 
 // MemStorer stores users in memory
 type MemStorer struct {

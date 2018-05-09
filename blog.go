@@ -54,27 +54,39 @@ var (
 )
 
 var (
-	ab                      = authboss.New()
-	database                = NewMemStorer()
-	schemaDec               = schema.NewDecoder()
-	templates tpl.Templates = nil
+	ab        = authboss.New()
+	database  = NewMemStorer()
+	schemaDec = schema.NewDecoder()
+
+	templates tpl.Templates
 )
 
 func setupAuthboss() {
 	ab.Config.Paths.RootURL = "http://localhost:3000"
-	ab.Config.Modules.LogoutMethod = "GET"
+
+	if !*flagAPI {
+		// Prevent us from having to use Javascript in our basic HTML
+		// to create a delete method, but don't override this default for the API
+		// version
+		ab.Config.Modules.LogoutMethod = "GET"
+	}
 
 	ab.Config.Storage.Server = database
 	ab.Config.Storage.SessionState = NewSessionStorer()
 	ab.Config.Storage.CookieState = NewCookieStorer()
 
-	ab.Config.Core.ViewRenderer = abrenderer.NewHTML("/auth", "ab_views")
+	if *flagAPI {
+		ab.Config.Core.ViewRenderer = defaults.JSONRenderer{}
+	} else {
+		ab.Config.Core.ViewRenderer = abrenderer.NewHTML("/auth", "ab_views")
+	}
+
 	ab.Config.Core.MailRenderer = abrenderer.NewEmail("/auth", "ab_views")
 	ab.Config.Core.Mailer = defaults.LogMailer{}
 
 	ab.Config.Modules.RegisterPreserveFields = []string{"email", "name"}
 
-	defaults.SetCore(&ab.Config, false)
+	defaults.SetCore(&ab.Config, *flagAPI, false)
 
 	// Here we initialize the bodyreader as something customized in order to accept a name
 	// parameter for our user as well as the standard e-mail and password.
@@ -88,7 +100,8 @@ func setupAuthboss() {
 		MinLength: 4,
 	}
 
-	ab.Config.Core.BodyReader = defaults.HTTPFormReader{
+	ab.Config.Core.BodyReader = defaults.HTTPBodyReader{
+		ReadJSON: *flagAPI,
 		Rulesets: map[string][]defaults.Rules{
 			"register":    {emailRule, passwordRule},
 			"recover_end": {passwordRule},
@@ -193,6 +206,24 @@ func main() {
 	mux.Get("/blogs", index)
 	mux.Get("/", index)
 
+	if *flagAPI {
+		// In order to have a "proper" API with csrf protection we allow
+		// the options request to return the csrf token that's required to complete the request
+		// when using post
+		optionsHandler := func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-CSRF-TOKEN", nosurf.Token(r))
+			w.WriteHeader(http.StatusOK)
+		}
+
+		// We have to add each of the authboss get/post routes specifically because
+		// chi sees the 'Mount' above as overriding the '/*' pattern.
+		routes := []string{"login", "logout", "recover", "recover/end", "register"}
+		mux.MethodFunc("OPTIONS", "/*", optionsHandler)
+		for _, r := range routes {
+			mux.MethodFunc("OPTIONS", "/auth/"+r, optionsHandler)
+		}
+	}
+
 	// Start the server
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
@@ -246,6 +277,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 	var b Blog
 	if *flagAPI {
 		byt, err := ioutil.ReadAll(r.Body)
+		r.Body.Close()
 		if badRequest(w, err) {
 			return
 		}
@@ -303,6 +335,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	if *flagAPI {
 		byt, err := ioutil.ReadAll(r.Body)
+		r.Body.Close()
 		if badRequest(w, err) {
 			return
 		}
