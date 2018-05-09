@@ -4,11 +4,11 @@ import "time"
 
 // Blog data
 type Blog struct {
-	ID       int
-	Title    string
-	AuthorID string
-	Date     time.Time
-	Content  string
+	ID       int       `json:"id,omitempty"`
+	Title    string    `json:"title,omitempty"`
+	AuthorID string    `json:"author_id,omitempty"`
+	Date     time.Time `json:"date,omitempty"`
+	Content  string    `json:"content,omitempty"`
 }
 
 // Blogs storage

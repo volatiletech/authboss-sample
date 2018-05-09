@@ -184,6 +184,19 @@ func (m MemStorer) Save(ctx context.Context, user authboss.User) error {
 
 // Load the user
 func (m MemStorer) Load(ctx context.Context, key string) (user authboss.User, err error) {
+	// Check to see if our key is actually an oauth2 pid
+	provider, uid, err := authboss.ParseOAuth2PID(key)
+	if err == nil {
+		for _, u := range m.Users {
+			if u.OAuth2Provider == provider && u.OAuth2UID == uid {
+				debugln("Loaded OAuth2 user:", u.Email)
+				return &u, nil
+			}
+		}
+
+		return nil, authboss.ErrUserNotFound
+	}
+
 	u, ok := m.Users[key]
 	if !ok {
 		return nil, authboss.ErrUserNotFound
@@ -264,7 +277,7 @@ func (m MemStorer) UseRememberToken(pid, token string) error {
 		if tok == token {
 			tokens[len(tokens)-1] = tokens[i]
 			m.Tokens[pid] = tokens[:len(tokens)-1]
-			debugf("Used remember for %s: %s", pid, token)
+			debugf("Used remember for %s: %s\n", pid, token)
 			return nil
 		}
 	}
@@ -274,7 +287,6 @@ func (m MemStorer) UseRememberToken(pid, token string) error {
 
 // NewFromOAuth2 creates an oauth2 user (but not in the database, just a blank one to be saved later)
 func (m MemStorer) NewFromOAuth2(ctx context.Context, provider string, details map[string]string) (authboss.OAuth2User, error) {
-
 	switch provider {
 	case "google":
 		email := details[aboauth.OAuth2Email]
@@ -292,6 +304,7 @@ func (m MemStorer) NewFromOAuth2(ctx context.Context, provider string, details m
 		user.Name = "Unknown"
 		user.Email = details[aboauth.OAuth2Email]
 		user.OAuth2UID = details[aboauth.OAuth2UID]
+		user.Confirmed = true
 
 		return user, nil
 	}

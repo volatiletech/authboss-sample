@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -48,13 +50,14 @@ var (
 	flagDebug    = flag.Bool("debug", false, "output debugging information")
 	flagDebugDB  = flag.Bool("debugdb", false, "output database on each request")
 	flagDebugCTX = flag.Bool("debugctx", false, "output specific authboss related context keys on each request")
+	flagAPI      = flag.Bool("api", false, "configure the app to be an api instead of an html app")
 )
 
 var (
-	ab        = authboss.New()
-	database  = NewMemStorer()
-	templates = tpl.Must(tpl.Load("views", "views/partials", "layout.html.tpl", funcs))
-	schemaDec = schema.NewDecoder()
+	ab                      = authboss.New()
+	database                = NewMemStorer()
+	schemaDec               = schema.NewDecoder()
+	templates tpl.Templates = nil
 )
 
 func setupAuthboss() {
@@ -132,6 +135,10 @@ func setupAuthboss() {
 func main() {
 	flag.Parse()
 
+	if !*flagAPI {
+		templates = tpl.Must(tpl.Load("views", "views/partials", "layout.html.tpl", funcs))
+	}
+
 	// Initialize Sessions and Cookies
 	// Typically gorilla securecookie and sessions packages require
 	// highly random secret keys that are not divulged to the public.
@@ -197,26 +204,29 @@ func main() {
 
 func dataInjector(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data := layoutData(w, r)
+		data := layoutData(w, &r)
 		r = r.WithContext(context.WithValue(r.Context(), authboss.CTXKeyData, data))
 		handler.ServeHTTP(w, r)
 	})
 }
 
-func layoutData(w http.ResponseWriter, r *http.Request) authboss.HTMLData {
+// layoutData is passing pointers to pointers be able to edit the current pointer
+// to the request. This is still safe as it still creates a new request and doesn't
+// modify the old one, it just modifies what we're pointing to in our methods so
+// we're able to skip returning an *http.Request everywhere
+func layoutData(w http.ResponseWriter, r **http.Request) authboss.HTMLData {
 	currentUserName := ""
-	userInter, err := ab.CurrentUser(r)
+	userInter, err := ab.LoadCurrentUser(r)
 	if userInter != nil && err == nil {
 		currentUserName = userInter.(*User).Name
 	}
 
 	return authboss.HTMLData{
 		"loggedin":          userInter != nil,
-		"username":          "",
 		"current_user_name": currentUserName,
-		"csrf_token":        nosurf.Token(r),
-		"flash_success":     authboss.FlashSuccess(w, r),
-		"flash_error":       authboss.FlashError(w, r),
+		"csrf_token":        nosurf.Token(*r),
+		"flash_success":     authboss.FlashSuccess(w, *r),
+		"flash_error":       authboss.FlashError(w, *r),
 	}
 }
 
@@ -231,16 +241,27 @@ func newblog(w http.ResponseWriter, r *http.Request) {
 var nextID = len(blogs) + 1
 
 func create(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if badRequest(w, err) {
-		return
-	}
-
 	// TODO: Validation
 
 	var b Blog
-	if badRequest(w, schemaDec.Decode(&b, r.PostForm)) {
-		return
+	if *flagAPI {
+		byt, err := ioutil.ReadAll(r.Body)
+		if badRequest(w, err) {
+			return
+		}
+
+		if badRequest(w, json.Unmarshal(byt, &b)) {
+			return
+		}
+	} else {
+		err := r.ParseForm()
+		if badRequest(w, err) {
+			return
+		}
+
+		if badRequest(w, schemaDec.Decode(&b, r.PostForm)) {
+			return
+		}
 	}
 
 	abuser := ab.CurrentUserP(r)
@@ -253,7 +274,12 @@ func create(w http.ResponseWriter, r *http.Request) {
 
 	blogs = append(blogs, b)
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	if *flagAPI {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	redirect(w, r, "/")
 }
 
 func edit(w http.ResponseWriter, r *http.Request) {
@@ -262,16 +288,10 @@ func edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := layoutData(w, r).MergeKV("post", blogs.Get(id))
-	mustRender(w, r, "edit", data)
+	mustRender(w, r, "edit", authboss.HTMLData{"post": blogs.Get(id)})
 }
 
 func update(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if badRequest(w, err) {
-		return
-	}
-
 	id, ok := blogID(w, r)
 	if !ok {
 		return
@@ -280,13 +300,34 @@ func update(w http.ResponseWriter, r *http.Request) {
 	// TODO: Validation
 
 	var b = blogs.Get(id)
-	if badRequest(w, schemaDec.Decode(b, r.PostForm)) {
-		return
+
+	if *flagAPI {
+		byt, err := ioutil.ReadAll(r.Body)
+		if badRequest(w, err) {
+			return
+		}
+
+		if badRequest(w, json.Unmarshal(byt, &b)) {
+			return
+		}
+	} else {
+		err := r.ParseForm()
+		if badRequest(w, err) {
+			return
+		}
+		if badRequest(w, schemaDec.Decode(b, r.PostForm)) {
+			return
+		}
 	}
 
 	b.Date = time.Now()
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	if *flagAPI {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	redirect(w, r, "/")
 }
 
 func destroy(w http.ResponseWriter, r *http.Request) {
@@ -297,7 +338,12 @@ func destroy(w http.ResponseWriter, r *http.Request) {
 
 	blogs.Delete(id)
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	if *flagAPI {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	redirect(w, r, "/")
 }
 
 func blogID(w http.ResponseWriter, r *http.Request) (int, bool) {
@@ -306,12 +352,12 @@ func blogID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	id, err := strconv.Atoi(str)
 	if err != nil {
 		log.Println("Error parsing blog id:", err)
-		http.Redirect(w, r, "/", http.StatusFound)
+		redirect(w, r, "/")
 		return 0, false
 	}
 
 	if id <= 0 {
-		http.Redirect(w, r, "/", http.StatusFound)
+		redirect(w, r, "/")
 		return 0, false
 	}
 
@@ -333,6 +379,20 @@ func mustRender(w http.ResponseWriter, r *http.Request, name string, data authbo
 	current.MergeKV("csrf_token", nosurf.Token(r))
 	current.Merge(data)
 
+	if *flagAPI {
+		w.Header().Set("Content-Type", "application/json")
+
+		byt, err := json.Marshal(current)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println("failed to marshal json:", err)
+			fmt.Fprintln(w, `{"error":"internal server error"}`)
+		}
+
+		w.Write(byt)
+		return
+	}
+
 	err := templates.Render(w, name, current)
 	if err == nil {
 		return
@@ -343,14 +403,32 @@ func mustRender(w http.ResponseWriter, r *http.Request, name string, data authbo
 	fmt.Fprintln(w, "Error occurred rendering template:", err)
 }
 
+func redirect(w http.ResponseWriter, r *http.Request, path string) {
+	if *flagAPI {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Location", path)
+		w.WriteHeader(http.StatusFound)
+		fmt.Fprintf(w, `{"path": %q}`, path)
+		return
+	}
+
+	http.Redirect(w, r, path, http.StatusFound)
+}
+
 func badRequest(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
 	}
 
+	if *flagAPI {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, `{"error":"bad request"}`, err)
+		return true
+	}
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusBadRequest)
 	fmt.Fprintln(w, "Bad request:", err)
-
 	return true
 }
