@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -27,7 +26,10 @@ func (s SessionState) Get(key string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	return str.(string), ok
+	value := str.(string)
+	debugf("Got session (%s): %s\n", key, value)
+
+	return value, ok
 }
 
 // SessionStorer stores sessions in a global gorilla cookiestore
@@ -39,15 +41,15 @@ func NewSessionStorer() *SessionStorer {
 }
 
 // ReadState loads the session from the request context
-func (s SessionStorer) ReadState(w http.ResponseWriter, r *http.Request) (authboss.ClientState, error) {
-	fmt.Println("DEBUG: Loading Session State")
+func (s SessionStorer) ReadState(r *http.Request) (authboss.ClientState, error) {
+	debugln("Loading session state")
 	session, err := sessionStore.Get(r, sessionCookieName)
 	if err != nil {
 		return nil, nil
 	}
 
 	if session == nil {
-		fmt.Println("DEBUG: WARN: SESSION NIL")
+		debugln("Session was nil")
 	}
 
 	cs := &SessionState{
@@ -59,7 +61,7 @@ func (s SessionStorer) ReadState(w http.ResponseWriter, r *http.Request) (authbo
 
 // WriteState to the responsewriter
 func (s SessionStorer) WriteState(w http.ResponseWriter, state authboss.ClientState, ev []authboss.ClientStateEvent) error {
-	fmt.Println("DEBUG: Writing Session State")
+	debugln("Writing session state")
 	ses := state.(*SessionState)
 
 	for _, ev := range ev {

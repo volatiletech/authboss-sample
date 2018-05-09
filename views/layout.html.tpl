@@ -23,6 +23,7 @@
 				<ul class="nav navbar-nav navbar-right">
 					{{if not .loggedin}}
 					<li><a href="/auth/register">Register</a></li>
+					<li><a href="/auth/recover">Recover</a></li>
 					<li><a href="/auth/login"><i class="fa fa-sign-in"></i> Login</a></li>
 					{{else}}
 					<li class="dropdown">
@@ -44,9 +45,7 @@
 	{{with .flash_success}}<div class="alert alert-success">{{.}}</div>{{end}}
 	{{with .flash_error}}<div class="alert alert-danger">{{.}}</div>{{end}}
 	{{template "yield" .}}
-	{{template "authboss" .}}
 </body>
 </html>
 {{define "pagetitle"}}{{end}}
 {{define "yield"}}{{end}}
-{{define "authboss"}}{{end}}

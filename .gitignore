@@ -26,3 +26,6 @@ _testmain.go
 
 .idea/
 *.iml
+
+oauth2.toml
+authboss-sample

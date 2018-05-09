@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/securecookie"
 	"github.com/volatiletech/authboss"
 )
@@ -21,9 +22,10 @@ func (c Cookies) Get(key string) (string, bool) {
 	if cookie, ok := c.cookies[key]; ok {
 		var value string
 		if err := cookieStore.Decode(cookie.Name, cookie.Value, &value); err != nil {
-			panic("COOKIE DECODE FAILURE:" + err.Error())
+			panic("Cookie decode failure:" + err.Error())
 		}
 
+		debugf("Got cookie (%s): %s\n", key, value)
 		return value, true
 	}
 
@@ -39,7 +41,7 @@ func NewCookieStorer() *CookieStorer {
 }
 
 // ReadState from the request
-func (c CookieStorer) ReadState(w http.ResponseWriter, r *http.Request) (authboss.ClientState, error) {
+func (c CookieStorer) ReadState(r *http.Request) (authboss.ClientState, error) {
 	cs := &Cookies{
 		cookies: make(map[string]*http.Cookie),
 	}
@@ -48,6 +50,7 @@ func (c CookieStorer) ReadState(w http.ResponseWriter, r *http.Request) (authbos
 		cs.cookies[c.Name] = c
 	}
 
+	debugln("Loading cookie state:", spew.Sdump(cs))
 	return cs, nil
 }
 
@@ -58,7 +61,7 @@ func (c CookieStorer) WriteState(w http.ResponseWriter, state authboss.ClientSta
 		case authboss.ClientStateEventPut:
 			encoded, err := cookieStore.Encode(ev.Key, ev.Value)
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("failed to encode cookie:", err)
 				return err
 			}
 
