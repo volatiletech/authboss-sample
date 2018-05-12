@@ -71,25 +71,42 @@ func setupAuthboss() {
 		ab.Config.Modules.LogoutMethod = "GET"
 	}
 
+	// Set up our server, session and cookie storage mechanisms.
+	// These are all from this package since the burden is on the
+	// implementer for these.
 	ab.Config.Storage.Server = database
 	ab.Config.Storage.SessionState = NewSessionStorer()
 	ab.Config.Storage.CookieState = NewCookieStorer()
 
+	// Another piece that we're responsible for: Rendering views.
+	// Though note that we're using the authboss-renderer package
+	// that makes the normal thing a bit easier.
 	if *flagAPI {
 		ab.Config.Core.ViewRenderer = defaults.JSONRenderer{}
 	} else {
 		ab.Config.Core.ViewRenderer = abrenderer.NewHTML("/auth", "ab_views")
 	}
 
+	// We render mail with the authboss-renderer but we use a LogMailer
+	// which simply sends the e-mail to stdout.
 	ab.Config.Core.MailRenderer = abrenderer.NewEmail("/auth", "ab_views")
 	ab.Config.Core.Mailer = defaults.LogMailer{}
 
+	// The preserve fields are things we don't want to
+	// lose when we're doing user registration (prevents having
+	// to type them again)
 	ab.Config.Modules.RegisterPreserveFields = []string{"email", "name"}
 
+	// This instantiates and uses every default implementation
+	// in the Config.Core area that exist in the defaults package.
+	// Just a convenient helper if you don't want to do anything fancy.
 	defaults.SetCore(&ab.Config, *flagAPI, false)
 
 	// Here we initialize the bodyreader as something customized in order to accept a name
 	// parameter for our user as well as the standard e-mail and password.
+	//
+	// We also change the validation for these fields
+	// to be something less secure so that we can use test data easier.
 	emailRule := defaults.Rules{
 		FieldName: "email", Required: true,
 		MatchError: "Must be a valid e-mail address",
@@ -99,11 +116,15 @@ func setupAuthboss() {
 		FieldName: "password", Required: true,
 		MinLength: 4,
 	}
+	nameRule := defaults.Rules{
+		FieldName: "name", Required: true,
+		MinLength: 2,
+	}
 
 	ab.Config.Core.BodyReader = defaults.HTTPBodyReader{
 		ReadJSON: *flagAPI,
 		Rulesets: map[string][]defaults.Rules{
-			"register":    {emailRule, passwordRule},
+			"register":    {emailRule, passwordRule, nameRule},
 			"recover_end": {passwordRule},
 		},
 		Confirms: map[string][]string{
@@ -120,6 +141,8 @@ func setupAuthboss() {
 		ClientSecret string `toml:"client_secret"`
 	}{}
 
+	// Set up Google OAuth2 if we have credentials in the
+	// file oauth2.toml for it.
 	_, err := toml.DecodeFile("oauth2.toml", &oauthcreds)
 	if err == nil && len(oauthcreds.ClientID) != 0 && len(oauthcreds.ClientSecret) != 0 {
 		fmt.Println("oauth2.toml exists, configuring google oauth2")
@@ -140,6 +163,7 @@ func setupAuthboss() {
 		fmt.Println("error loading oauth2.toml:", err)
 	}
 
+	// Initialize authboss (instantiate modules etc.)
 	if err := ab.Init(); err != nil {
 		panic(err)
 	}
@@ -148,6 +172,7 @@ func setupAuthboss() {
 func main() {
 	flag.Parse()
 
+	// Load our application's templates
 	if !*flagAPI {
 		templates = tpl.Must(tpl.Load("views", "views/partials", "layout.html.tpl", funcs))
 	}
@@ -176,13 +201,19 @@ func main() {
 	cookieStore = securecookie.New(cookieStoreKey, nil)
 	sessionStore = sessions.NewCookieStore(sessionStoreKey)
 
-	// Initialize ab.
+	// Initialize authboss
 	setupAuthboss()
 
 	// Set up our router
 	schemaDec.IgnoreUnknownKeys(true)
 
 	mux := chi.NewRouter()
+	// The middlewares we're using:
+	// - logger just does basic logging of requests and debug info
+	// - nosurfing is a more verbose wrapper around csrf handling
+	// - LoadClientStateMiddleware is required for session/cookie stuff
+	// - remember middleware logs users in if they have a remember token
+	// - dataInjector is for putting data into the request context we need for our template layout
 	mux.Use(logger, nosurfing, ab.LoadClientStateMiddleware, remember.Middleware(ab), dataInjector)
 
 	// Authed routes
