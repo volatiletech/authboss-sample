@@ -11,6 +11,11 @@ This is a simple blogging engine with a few basic features:
 - Support for API style JSON requests and responses (-api flag)
 - Various levels of debugging to see what's going wrong (-debug* flags)
 
+Uses the following default libraries:
+
+- https://github.com/volatiletech/authboss-renderer
+- https://github.com/volatiletech/authboss-clientstate
+
 # Disclaimer
 
 This sample is **NOT** a seed project. Do not use it as one.

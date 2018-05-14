@@ -17,7 +17,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/volatiletech/authboss"
-	"github.com/volatiletech/authboss-renderer"
 	_ "github.com/volatiletech/authboss/auth"
 	"github.com/volatiletech/authboss/confirm"
 	"github.com/volatiletech/authboss/defaults"
@@ -28,14 +27,15 @@ import (
 	_ "github.com/volatiletech/authboss/register"
 	"github.com/volatiletech/authboss/remember"
 
+	"github.com/volatiletech/authboss-clientstate"
+	"github.com/volatiletech/authboss-renderer"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
 	"github.com/aarondl/tpl"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/schema"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
 	"github.com/justinas/nosurf"
 )
 
@@ -58,7 +58,14 @@ var (
 	database  = NewMemStorer()
 	schemaDec = schema.NewDecoder()
 
+	sessionStore abclientstate.SessionStorer
+	cookieStore  abclientstate.CookieStorer
+
 	templates tpl.Templates
+)
+
+const (
+	sessionCookieName = "ab_blog"
 )
 
 func setupAuthboss() {
@@ -75,8 +82,8 @@ func setupAuthboss() {
 	// These are all from this package since the burden is on the
 	// implementer for these.
 	ab.Config.Storage.Server = database
-	ab.Config.Storage.SessionState = NewSessionStorer()
-	ab.Config.Storage.CookieState = NewCookieStorer()
+	ab.Config.Storage.SessionState = sessionStore
+	ab.Config.Storage.CookieState = cookieStore
 
 	// Another piece that we're responsible for: Rendering views.
 	// Though note that we're using the authboss-renderer package
@@ -198,8 +205,8 @@ func main() {
 	// a configuration environment var or file.
 	cookieStoreKey, _ := base64.StdEncoding.DecodeString(`NpEPi8pEjKVjLGJ6kYCS+VTCzi6BUuDzU0wrwXyf5uDPArtlofn2AG6aTMiPmN3C909rsEWMNqJqhIVPGP3Exg==`)
 	sessionStoreKey, _ := base64.StdEncoding.DecodeString(`AbfYwmmt8UCwUuhd9qvfNA9UCuN1cVcKJN1ofbiky6xCyyBj20whe40rJa3Su0WOWLWcPpO1taqJdsEI/65+JA==`)
-	cookieStore = securecookie.New(cookieStoreKey, nil)
-	sessionStore = sessions.NewCookieStore(sessionStoreKey)
+	cookieStore = abclientstate.NewCookieStorer(cookieStoreKey, nil)
+	sessionStore = abclientstate.NewSessionStorer(sessionCookieName, sessionStoreKey, nil)
 
 	// Initialize authboss
 	setupAuthboss()
