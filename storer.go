@@ -24,8 +24,9 @@ type User struct {
 	Password string
 
 	// Confirm
-	ConfirmToken string
-	Confirmed    bool
+	ConfirmSelector string
+	ConfirmVerifier string
+	Confirmed       bool
 
 	// Lock
 	AttemptCount int
@@ -33,7 +34,8 @@ type User struct {
 	Locked       time.Time
 
 	// Recover
-	RecoverToken       string
+	RecoverSelector    string
+	RecoverVerifier    string
 	RecoverTokenExpiry time.Time
 
 	// OAuth2
@@ -76,8 +78,11 @@ func (u *User) PutEmail(email string) { u.Email = email }
 // PutConfirmed into user
 func (u *User) PutConfirmed(confirmed bool) { u.Confirmed = confirmed }
 
-// PutConfirmToken into user
-func (u *User) PutConfirmToken(confirmToken string) { u.ConfirmToken = confirmToken }
+// PutConfirmSelector into user
+func (u *User) PutConfirmSelector(confirmSelector string) { u.ConfirmSelector = confirmSelector }
+
+// PutConfirmVerifier into user
+func (u *User) PutConfirmVerifier(confirmVerifier string) { u.ConfirmVerifier = confirmVerifier }
 
 // PutLocked into user
 func (u *User) PutLocked(locked time.Time) { u.Locked = locked }
@@ -88,8 +93,11 @@ func (u *User) PutAttemptCount(attempts int) { u.AttemptCount = attempts }
 // PutLastAttempt into user
 func (u *User) PutLastAttempt(last time.Time) { u.LastAttempt = last }
 
-// PutRecoverToken into user
-func (u *User) PutRecoverToken(token string) { u.RecoverToken = token }
+// PutRecoverSelector into user
+func (u *User) PutRecoverSelector(token string) { u.RecoverSelector = token }
+
+// PutRecoverVerifier into user
+func (u *User) PutRecoverVerifier(token string) { u.RecoverVerifier = token }
 
 // PutRecoverExpiry into user
 func (u *User) PutRecoverExpiry(expiry time.Time) { u.RecoverTokenExpiry = expiry }
@@ -128,8 +136,11 @@ func (u User) GetEmail() string { return u.Email }
 // GetConfirmed from user
 func (u User) GetConfirmed() bool { return u.Confirmed }
 
-// GetConfirmToken from user
-func (u User) GetConfirmToken() string { return u.ConfirmToken }
+// GetConfirmSelector from user
+func (u User) GetConfirmSelector() string { return u.ConfirmSelector }
+
+// GetConfirmVerifier from user
+func (u User) GetConfirmVerifier() string { return u.ConfirmVerifier }
 
 // GetLocked from user
 func (u User) GetLocked() time.Time { return u.Locked }
@@ -140,8 +151,11 @@ func (u User) GetAttemptCount() int { return u.AttemptCount }
 // GetLastAttempt from user
 func (u User) GetLastAttempt() time.Time { return u.LastAttempt }
 
-// GetRecoverToken from user
-func (u User) GetRecoverToken() string { return u.RecoverToken }
+// GetRecoverSelector from user
+func (u User) GetRecoverSelector() string { return u.RecoverSelector }
+
+// GetRecoverVerifier from user
+func (u User) GetRecoverVerifier() string { return u.RecoverVerifier }
 
 // GetRecoverExpiry from user
 func (u User) GetRecoverExpiry() time.Time { return u.RecoverTokenExpiry }
@@ -244,11 +258,11 @@ func (m MemStorer) Create(ctx context.Context, user authboss.User) error {
 	return nil
 }
 
-// LoadByConfirmToken looks a user up by confirmation token
-func (m MemStorer) LoadByConfirmToken(ctx context.Context, token string) (user authboss.ConfirmableUser, err error) {
+// LoadByConfirmSelector looks a user up by confirmation token
+func (m MemStorer) LoadByConfirmSelector(ctx context.Context, selector string) (user authboss.ConfirmableUser, err error) {
 	for _, v := range m.Users {
-		if v.ConfirmToken == token {
-			debugln("Loaded user by confirm token:", token, v.Name)
+		if v.ConfirmSelector == selector {
+			debugln("Loaded user by confirm selector:", selector, v.Name)
 			return &v, nil
 		}
 	}
@@ -256,11 +270,11 @@ func (m MemStorer) LoadByConfirmToken(ctx context.Context, token string) (user a
 	return nil, authboss.ErrUserNotFound
 }
 
-// LoadByRecoverToken looks a user up by confirmation token
-func (m MemStorer) LoadByRecoverToken(ctx context.Context, token string) (user authboss.RecoverableUser, err error) {
+// LoadByRecoverSelector looks a user up by confirmation selector
+func (m MemStorer) LoadByRecoverSelector(ctx context.Context, selector string) (user authboss.RecoverableUser, err error) {
 	for _, v := range m.Users {
-		if v.RecoverToken == token {
-			debugln("Loaded user by recover token:", token, v.Name)
+		if v.RecoverSelector == selector {
+			debugln("Loaded user by recover selector:", selector, v.Name)
 			return &v, nil
 		}
 	}
