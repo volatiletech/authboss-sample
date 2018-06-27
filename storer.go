@@ -283,7 +283,7 @@ func (m MemStorer) LoadByRecoverSelector(ctx context.Context, selector string) (
 }
 
 // AddRememberToken to a user
-func (m MemStorer) AddRememberToken(pid, token string) error {
+func (m MemStorer) AddRememberToken(ctx context.Context, pid, token string) error {
 	m.Tokens[pid] = append(m.Tokens[pid], token)
 	debugf("Adding rm token to %s: %s\n", pid, token)
 	spew.Dump(m.Tokens)
@@ -291,7 +291,7 @@ func (m MemStorer) AddRememberToken(pid, token string) error {
 }
 
 // DelRememberTokens removes all tokens for the given pid
-func (m MemStorer) DelRememberTokens(pid string) error {
+func (m MemStorer) DelRememberTokens(ctx context.Context, pid string) error {
 	delete(m.Tokens, pid)
 	debugln("Deleting rm tokens from:", pid)
 	spew.Dump(m.Tokens)
@@ -300,7 +300,7 @@ func (m MemStorer) DelRememberTokens(pid string) error {
 
 // UseRememberToken finds the pid-token pair and deletes it.
 // If the token could not be found return ErrTokenNotFound
-func (m MemStorer) UseRememberToken(pid, token string) error {
+func (m MemStorer) UseRememberToken(ctx context.Context, pid, token string) error {
 	tokens, ok := m.Tokens[pid]
 	if !ok {
 		debugln("Failed to find rm tokens for:", pid)
