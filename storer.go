@@ -59,6 +59,7 @@ var (
 	_ authboss.ConfirmableUser = assertUser
 	_ authboss.LockableUser    = assertUser
 	_ authboss.RecoverableUser = assertUser
+	_ authboss.ArbitraryUser   = assertUser
 
 	_ authboss.CreatingServerStorer    = assertStorer
 	_ authboss.ConfirmingServerStorer  = assertStorer
