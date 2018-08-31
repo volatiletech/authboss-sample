@@ -23,6 +23,9 @@ import (
 	"github.com/volatiletech/authboss/lock"
 	_ "github.com/volatiletech/authboss/logout"
 	aboauth "github.com/volatiletech/authboss/oauth2"
+	"github.com/volatiletech/authboss/otp/twofactor"
+	"github.com/volatiletech/authboss/otp/twofactor/sms2fa"
+	"github.com/volatiletech/authboss/otp/twofactor/totp2fa"
 	_ "github.com/volatiletech/authboss/recover"
 	_ "github.com/volatiletech/authboss/register"
 	"github.com/volatiletech/authboss/remember"
@@ -104,6 +107,10 @@ func setupAuthboss() {
 	// to type them again)
 	ab.Config.Modules.RegisterPreserveFields = []string{"email", "name"}
 
+	// TOTP2FAIssuer is the name of the issuer we use for totp 2fa
+	ab.Config.Modules.TOTP2FAIssuer = "ABBlog"
+	ab.Config.Modules.TwoFactorRedirectOnUnauthed = true
+
 	// This instantiates and uses every default implementation
 	// in the Config.Core area that exist in the defaults package.
 	// Just a convenient helper if you don't want to do anything fancy.
@@ -147,6 +154,22 @@ func setupAuthboss() {
 		ClientID     string `toml:"client_id"`
 		ClientSecret string `toml:"client_secret"`
 	}{}
+
+	// Set up 2fa
+	twofaRecovery := &twofactor.Recovery{Authboss: ab}
+	if err := twofaRecovery.Setup(); err != nil {
+		panic(err)
+	}
+
+	totp := &totp2fa.TOTP{Authboss: ab}
+	if err := totp.Setup(); err != nil {
+		panic(err)
+	}
+
+	sms := &sms2fa.SMS{Authboss: ab, Sender: smsLogSender{}}
+	if err := sms.Setup(); err != nil {
+		panic(err)
+	}
 
 	// Set up Google OAuth2 if we have credentials in the
 	// file oauth2.toml for it.
@@ -225,7 +248,7 @@ func main() {
 
 	// Authed routes
 	mux.Group(func(mux chi.Router) {
-		mux.Use(authboss.Middleware(ab, true, false), lock.Middleware(ab), confirm.Middleware(ab))
+		mux.Use(authboss.Middleware(ab, true, false, true), lock.Middleware(ab), confirm.Middleware(ab))
 		mux.MethodFunc("GET", "/blogs/new", newblog)
 		mux.MethodFunc("GET", "/blogs/{id}/edit", edit)
 		mux.MethodFunc("POST", "/blogs/{id}/edit", update)
@@ -502,4 +525,13 @@ func badRequest(w http.ResponseWriter, err error) bool {
 	w.WriteHeader(http.StatusBadRequest)
 	fmt.Fprintln(w, "Bad request:", err)
 	return true
+}
+
+type smsLogSender struct {
+}
+
+// Send an SMS
+func (s smsLogSender) Send(number, text string) error {
+	fmt.Println("sms sent to:", number, "contents:", text)
+	return nil
 }

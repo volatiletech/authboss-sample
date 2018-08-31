@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/volatiletech/authboss"
 	aboauth "github.com/volatiletech/authboss/oauth2"
+	"github.com/volatiletech/authboss/otp/twofactor/sms2fa"
+	"github.com/volatiletech/authboss/otp/twofactor/totp2fa"
 )
 
 var nextUserID int
@@ -45,6 +47,11 @@ type User struct {
 	OAuth2RefreshToken string
 	OAuth2Expiry       time.Time
 
+	// 2fa
+	TOTPSecretKey  string
+	SMSPhoneNumber string
+	RecoveryCodes  string
+
 	// Remember is in another table
 }
 
@@ -60,6 +67,9 @@ var (
 	_ authboss.LockableUser    = assertUser
 	_ authboss.RecoverableUser = assertUser
 	_ authboss.ArbitraryUser   = assertUser
+
+	_ totp2fa.User = assertUser
+	_ sms2fa.User  = assertUser
 
 	_ authboss.CreatingServerStorer    = assertStorer
 	_ authboss.ConfirmingServerStorer  = assertStorer
@@ -102,6 +112,15 @@ func (u *User) PutRecoverVerifier(token string) { u.RecoverVerifier = token }
 
 // PutRecoverExpiry into user
 func (u *User) PutRecoverExpiry(expiry time.Time) { u.RecoverTokenExpiry = expiry }
+
+// PutTOTPSecretKey into user
+func (u *User) PutTOTPSecretKey(key string) { u.TOTPSecretKey = key }
+
+// PutSMSPhoneNumber into user
+func (u *User) PutSMSPhoneNumber(key string) { u.SMSPhoneNumber = key }
+
+// PutRecoveryCodes into user
+func (u *User) PutRecoveryCodes(key string) { u.RecoveryCodes = key }
 
 // PutOAuth2UID into user
 func (u *User) PutOAuth2UID(uid string) { u.OAuth2UID = uid }
@@ -161,12 +180,14 @@ func (u User) GetRecoverVerifier() string { return u.RecoverVerifier }
 // GetRecoverExpiry from user
 func (u User) GetRecoverExpiry() time.Time { return u.RecoverTokenExpiry }
 
-// GetArbitrary from user
-func (u User) GetArbitrary() map[string]string {
-	return map[string]string{
-		"name": u.Name,
-	}
-}
+// GetTOTPSecretKey from user
+func (u User) GetTOTPSecretKey() string { return u.TOTPSecretKey }
+
+// GetSMSPhoneNumber from user
+func (u User) GetSMSPhoneNumber() string { return u.SMSPhoneNumber }
+
+// GetRecoveryCodes from user
+func (u User) GetRecoveryCodes() string { return u.RecoveryCodes }
 
 // IsOAuth2User returns true if the user was created with oauth2
 func (u User) IsOAuth2User() bool { return len(u.OAuth2UID) != 0 }
@@ -185,6 +206,13 @@ func (u User) GetOAuth2RefreshToken() (refreshToken string) { return u.OAuth2Ref
 
 // GetOAuth2Expiry from user
 func (u User) GetOAuth2Expiry() (expiry time.Time) { return u.OAuth2Expiry }
+
+// GetArbitrary from user
+func (u User) GetArbitrary() map[string]string {
+	return map[string]string{
+		"name": u.Name,
+	}
+}
 
 // MemStorer stores users in memory
 type MemStorer struct {
