@@ -109,7 +109,7 @@ func setupAuthboss() {
 
 	// TOTP2FAIssuer is the name of the issuer we use for totp 2fa
 	ab.Config.Modules.TOTP2FAIssuer = "ABBlog"
-	ab.Config.Modules.TwoFactorRedirectOnUnauthed = true
+	ab.Config.Modules.RoutesRedirectOnUnauthed = true
 
 	// This instantiates and uses every default implementation
 	// in the Config.Core area that exist in the defaults package.
