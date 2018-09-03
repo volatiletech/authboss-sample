@@ -531,7 +531,7 @@ type smsLogSender struct {
 }
 
 // Send an SMS
-func (s smsLogSender) Send(number, text string) error {
+func (s smsLogSender) Send(ctx context.Context, number, text string) error {
 	fmt.Println("sms sent to:", number, "contents:", text)
 	return nil
 }
