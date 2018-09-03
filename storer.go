@@ -48,9 +48,10 @@ type User struct {
 	OAuth2Expiry       time.Time
 
 	// 2fa
-	TOTPSecretKey  string
-	SMSPhoneNumber string
-	RecoveryCodes  string
+	TOTPSecretKey      string
+	SMSPhoneNumber     string
+	SMSSeedPhoneNumber string
+	RecoveryCodes      string
 
 	// Remember is in another table
 }
@@ -186,6 +187,9 @@ func (u User) GetTOTPSecretKey() string { return u.TOTPSecretKey }
 // GetSMSPhoneNumber from user
 func (u User) GetSMSPhoneNumber() string { return u.SMSPhoneNumber }
 
+// GetSMSPhoneNumberSeed from user
+func (u User) GetSMSPhoneNumberSeed() string { return u.SMSSeedPhoneNumber }
+
 // GetRecoveryCodes from user
 func (u User) GetRecoveryCodes() string { return u.RecoveryCodes }
 
@@ -225,11 +229,12 @@ func NewMemStorer() *MemStorer {
 	return &MemStorer{
 		Users: map[string]User{
 			"rick@councilofricks.com": User{
-				ID:        1,
-				Name:      "Rick",
-				Password:  "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
-				Email:     "rick@councilofricks.com",
-				Confirmed: true,
+				ID:                 1,
+				Name:               "Rick",
+				Password:           "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
+				Email:              "rick@councilofricks.com",
+				Confirmed:          true,
+				SMSSeedPhoneNumber: "(777)-123-4567",
 			},
 		},
 		Tokens: make(map[string][]string),
