@@ -248,7 +248,7 @@ func main() {
 
 	// Authed routes
 	mux.Group(func(mux chi.Router) {
-		mux.Use(authboss.Middleware(ab, true, false, true), lock.Middleware(ab), confirm.Middleware(ab))
+		mux.Use(authboss.Middleware(ab, true, false, false), lock.Middleware(ab), confirm.Middleware(ab))
 		mux.MethodFunc("GET", "/blogs/new", newblog)
 		mux.MethodFunc("GET", "/blogs/{id}/edit", edit)
 		mux.MethodFunc("POST", "/blogs/{id}/edit", update)
