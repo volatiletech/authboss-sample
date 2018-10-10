@@ -100,7 +100,6 @@ func setupAuthboss() {
 	// We render mail with the authboss-renderer but we use a LogMailer
 	// which simply sends the e-mail to stdout.
 	ab.Config.Core.MailRenderer = abrenderer.NewEmail("/auth", "ab_views")
-	ab.Config.Core.Mailer = defaults.LogMailer{}
 
 	// The preserve fields are things we don't want to
 	// lose when we're doing user registration (prevents having
