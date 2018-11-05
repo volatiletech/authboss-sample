@@ -110,6 +110,9 @@ func setupAuthboss() {
 	ab.Config.Modules.TOTP2FAIssuer = "ABBlog"
 	ab.Config.Modules.RoutesRedirectOnUnauthed = true
 
+	// Turn on e-mail authentication required
+	ab.Config.Modules.TwoFactorEmailAuthRequired = true
+
 	// This instantiates and uses every default implementation
 	// in the Config.Core area that exist in the defaults package.
 	// Just a convenient helper if you don't want to do anything fancy.
