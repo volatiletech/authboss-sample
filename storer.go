@@ -12,8 +12,6 @@ import (
 	"github.com/volatiletech/authboss/otp/twofactor/totp2fa"
 )
 
-var nextUserID int
-
 // User struct for authboss
 type User struct {
 	ID int
