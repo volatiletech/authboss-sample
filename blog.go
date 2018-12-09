@@ -127,7 +127,7 @@ func setupAuthboss() {
 	}
 	passwordRule := defaults.Rules{
 		FieldName: "password", Required: true,
-		MinLength: 4,
+		MinLength: 8,
 	}
 	nameRule := defaults.Rules{
 		FieldName: "name", Required: true,
