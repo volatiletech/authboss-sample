@@ -39,6 +39,7 @@ import (
 	"github.com/aarondl/tpl"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/schema"
+	"github.com/gorilla/sessions"
 	"github.com/justinas/nosurf"
 )
 
@@ -231,7 +232,12 @@ func main() {
 	cookieStoreKey, _ := base64.StdEncoding.DecodeString(`NpEPi8pEjKVjLGJ6kYCS+VTCzi6BUuDzU0wrwXyf5uDPArtlofn2AG6aTMiPmN3C909rsEWMNqJqhIVPGP3Exg==`)
 	sessionStoreKey, _ := base64.StdEncoding.DecodeString(`AbfYwmmt8UCwUuhd9qvfNA9UCuN1cVcKJN1ofbiky6xCyyBj20whe40rJa3Su0WOWLWcPpO1taqJdsEI/65+JA==`)
 	cookieStore = abclientstate.NewCookieStorer(cookieStoreKey, nil)
+	cookieStore.HTTPOnly = false
+	cookieStore.Secure = false
 	sessionStore = abclientstate.NewSessionStorer(sessionCookieName, sessionStoreKey, nil)
+	cstore := sessionStore.Store.(*sessions.CookieStore)
+	cstore.Options.HttpOnly = false
+	cstore.Options.Secure = false
 
 	// Initialize authboss
 	setupAuthboss()
