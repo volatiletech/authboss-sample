@@ -238,6 +238,7 @@ func main() {
 	cstore := sessionStore.Store.(*sessions.CookieStore)
 	cstore.Options.HttpOnly = false
 	cstore.Options.Secure = false
+	cstore.MaxAge(int((30 * 24 * time.Hour) / time.Second))
 
 	// Initialize authboss
 	setupAuthboss()
@@ -256,7 +257,7 @@ func main() {
 
 	// Authed routes
 	mux.Group(func(mux chi.Router) {
-		mux.Use(authboss.Middleware(ab, true, false, false), lock.Middleware(ab), confirm.Middleware(ab))
+		mux.Use(authboss.Middleware2(ab, authboss.RequireNone, authboss.RespondUnauthorized), lock.Middleware(ab), confirm.Middleware(ab))
 		mux.MethodFunc("GET", "/blogs/new", newblog)
 		mux.MethodFunc("GET", "/blogs/{id}/edit", edit)
 		mux.MethodFunc("POST", "/blogs/{id}/edit", update)
