@@ -149,7 +149,7 @@ func setupAuthboss() {
 			"recover_end": {"password", authboss.ConfirmPrefix + "password"},
 		},
 		Whitelist: map[string][]string{
-			"register": []string{"email", "name", "password"},
+			"register": {"email", "name", "password"},
 		},
 	}
 
@@ -180,7 +180,7 @@ func setupAuthboss() {
 	if err == nil && len(oauthcreds.ClientID) != 0 && len(oauthcreds.ClientSecret) != 0 {
 		fmt.Println("oauth2.toml exists, configuring google oauth2")
 		ab.Config.Modules.OAuth2Providers = map[string]authboss.OAuth2Provider{
-			"google": authboss.OAuth2Provider{
+			"google": {
 				OAuth2Config: &oauth2.Config{
 					ClientID:     oauthcreds.ClientID,
 					ClientSecret: oauthcreds.ClientSecret,
