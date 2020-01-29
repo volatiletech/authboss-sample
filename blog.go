@@ -127,7 +127,7 @@ func setupAuthboss() {
 	emailRule := defaults.Rules{
 		FieldName: "email", Required: true,
 		MatchError: "Must be a valid e-mail address",
-		MustMatch:  regexp.MustCompile(`.*@.*\.[a-z]{1,}`),
+		MustMatch:  regexp.MustCompile(`.*@.*\.[a-z]+`),
 	}
 	passwordRule := defaults.Rules{
 		FieldName: "password", Required: true,
