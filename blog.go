@@ -347,7 +347,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 	var b Blog
 	if *flagAPI {
 		byt, err := ioutil.ReadAll(r.Body)
-		r.Body.Close()
+		_ = r.Body.Close()
 		if badRequest(w, err) {
 			return
 		}
@@ -405,7 +405,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	if *flagAPI {
 		byt, err := ioutil.ReadAll(r.Body)
-		r.Body.Close()
+		_ = r.Body.Close()
 		if badRequest(w, err) {
 			return
 		}
@@ -489,10 +489,10 @@ func mustRender(w http.ResponseWriter, r *http.Request, name string, data authbo
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Println("failed to marshal json:", err)
-			fmt.Fprintln(w, `{"error":"internal server error"}`)
+			_, _ = fmt.Fprintln(w, `{"error":"internal server error"}`)
 		}
 
-		w.Write(byt)
+		_, _ = w.Write(byt)
 		return
 	}
 
@@ -503,7 +503,7 @@ func mustRender(w http.ResponseWriter, r *http.Request, name string, data authbo
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintln(w, "Error occurred rendering template:", err)
+	_, _ = fmt.Fprintln(w, "Error occurred rendering template:", err)
 }
 
 func redirect(w http.ResponseWriter, r *http.Request, path string) {
@@ -511,7 +511,7 @@ func redirect(w http.ResponseWriter, r *http.Request, path string) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Location", path)
 		w.WriteHeader(http.StatusFound)
-		fmt.Fprintf(w, `{"path": %q}`, path)
+		_, _ = fmt.Fprintf(w, `{"path": %q}`, path)
 		return
 	}
 
@@ -526,13 +526,13 @@ func badRequest(w http.ResponseWriter, err error) bool {
 	if *flagAPI {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, `{"error":"bad request"}`, err)
+		_, _ = fmt.Fprintln(w, `{"error":"bad request"}`, err)
 		return true
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintln(w, "Bad request:", err)
+	_, _ = fmt.Fprintln(w, "Bad request:", err)
 	return true
 }
 
