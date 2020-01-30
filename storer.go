@@ -226,7 +226,7 @@ type MemStorer struct {
 func NewMemStorer() *MemStorer {
 	return &MemStorer{
 		Users: map[string]User{
-			"rick@councilofricks.com": User{
+			"rick@councilofricks.com": {
 				ID:                 1,
 				Name:               "Rick",
 				Password:           "$2a$10$XtW/BrS5HeYIuOCXYe8DFuInetDMdaarMUJEOg/VA/JAIDgw3l4aG", // pass = 1234
@@ -240,7 +240,7 @@ func NewMemStorer() *MemStorer {
 }
 
 // Save the user
-func (m MemStorer) Save(ctx context.Context, user authboss.User) error {
+func (m MemStorer) Save(_ context.Context, user authboss.User) error {
 	u := user.(*User)
 	m.Users[u.Email] = *u
 
@@ -249,7 +249,7 @@ func (m MemStorer) Save(ctx context.Context, user authboss.User) error {
 }
 
 // Load the user
-func (m MemStorer) Load(ctx context.Context, key string) (user authboss.User, err error) {
+func (m MemStorer) Load(_ context.Context, key string) (user authboss.User, err error) {
 	// Check to see if our key is actually an oauth2 pid
 	provider, uid, err := authboss.ParseOAuth2PID(key)
 	if err == nil {
@@ -273,12 +273,12 @@ func (m MemStorer) Load(ctx context.Context, key string) (user authboss.User, er
 }
 
 // New user creation
-func (m MemStorer) New(ctx context.Context) authboss.User {
+func (m MemStorer) New(_ context.Context) authboss.User {
 	return &User{}
 }
 
 // Create the user
-func (m MemStorer) Create(ctx context.Context, user authboss.User) error {
+func (m MemStorer) Create(_ context.Context, user authboss.User) error {
 	u := user.(*User)
 
 	if _, ok := m.Users[u.Email]; ok {
@@ -291,7 +291,7 @@ func (m MemStorer) Create(ctx context.Context, user authboss.User) error {
 }
 
 // LoadByConfirmSelector looks a user up by confirmation token
-func (m MemStorer) LoadByConfirmSelector(ctx context.Context, selector string) (user authboss.ConfirmableUser, err error) {
+func (m MemStorer) LoadByConfirmSelector(_ context.Context, selector string) (user authboss.ConfirmableUser, err error) {
 	for _, v := range m.Users {
 		if v.ConfirmSelector == selector {
 			debugln("Loaded user by confirm selector:", selector, v.Name)
@@ -303,7 +303,7 @@ func (m MemStorer) LoadByConfirmSelector(ctx context.Context, selector string) (
 }
 
 // LoadByRecoverSelector looks a user up by confirmation selector
-func (m MemStorer) LoadByRecoverSelector(ctx context.Context, selector string) (user authboss.RecoverableUser, err error) {
+func (m MemStorer) LoadByRecoverSelector(_ context.Context, selector string) (user authboss.RecoverableUser, err error) {
 	for _, v := range m.Users {
 		if v.RecoverSelector == selector {
 			debugln("Loaded user by recover selector:", selector, v.Name)
@@ -315,7 +315,7 @@ func (m MemStorer) LoadByRecoverSelector(ctx context.Context, selector string) (
 }
 
 // AddRememberToken to a user
-func (m MemStorer) AddRememberToken(ctx context.Context, pid, token string) error {
+func (m MemStorer) AddRememberToken(_ context.Context, pid, token string) error {
 	m.Tokens[pid] = append(m.Tokens[pid], token)
 	debugf("Adding rm token to %s: %s\n", pid, token)
 	spew.Dump(m.Tokens)
@@ -323,7 +323,7 @@ func (m MemStorer) AddRememberToken(ctx context.Context, pid, token string) erro
 }
 
 // DelRememberTokens removes all tokens for the given pid
-func (m MemStorer) DelRememberTokens(ctx context.Context, pid string) error {
+func (m MemStorer) DelRememberTokens(_ context.Context, pid string) error {
 	delete(m.Tokens, pid)
 	debugln("Deleting rm tokens from:", pid)
 	spew.Dump(m.Tokens)
@@ -332,7 +332,7 @@ func (m MemStorer) DelRememberTokens(ctx context.Context, pid string) error {
 
 // UseRememberToken finds the pid-token pair and deletes it.
 // If the token could not be found return ErrTokenNotFound
-func (m MemStorer) UseRememberToken(ctx context.Context, pid, token string) error {
+func (m MemStorer) UseRememberToken(_ context.Context, pid, token string) error {
 	tokens, ok := m.Tokens[pid]
 	if !ok {
 		debugln("Failed to find rm tokens for:", pid)
@@ -352,7 +352,7 @@ func (m MemStorer) UseRememberToken(ctx context.Context, pid, token string) erro
 }
 
 // NewFromOAuth2 creates an oauth2 user (but not in the database, just a blank one to be saved later)
-func (m MemStorer) NewFromOAuth2(ctx context.Context, provider string, details map[string]string) (authboss.OAuth2User, error) {
+func (m MemStorer) NewFromOAuth2(_ context.Context, provider string, details map[string]string) (authboss.OAuth2User, error) {
 	switch provider {
 	case "google":
 		email := details[aboauth.OAuth2Email]
@@ -379,7 +379,7 @@ func (m MemStorer) NewFromOAuth2(ctx context.Context, provider string, details m
 }
 
 // SaveOAuth2 user
-func (m MemStorer) SaveOAuth2(ctx context.Context, user authboss.OAuth2User) error {
+func (m MemStorer) SaveOAuth2(_ context.Context, user authboss.OAuth2User) error {
 	u := user.(*User)
 	m.Users[u.Email] = *u
 

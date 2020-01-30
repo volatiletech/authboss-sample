@@ -127,7 +127,7 @@ func setupAuthboss() {
 	emailRule := defaults.Rules{
 		FieldName: "email", Required: true,
 		MatchError: "Must be a valid e-mail address",
-		MustMatch:  regexp.MustCompile(`.*@.*\.[a-z]{1,}`),
+		MustMatch:  regexp.MustCompile(`.*@.*\.[a-z]+`),
 	}
 	passwordRule := defaults.Rules{
 		FieldName: "password", Required: true,
@@ -149,7 +149,7 @@ func setupAuthboss() {
 			"recover_end": {"password", authboss.ConfirmPrefix + "password"},
 		},
 		Whitelist: map[string][]string{
-			"register": []string{"email", "name", "password"},
+			"register": {"email", "name", "password"},
 		},
 	}
 
@@ -180,7 +180,7 @@ func setupAuthboss() {
 	if err == nil && len(oauthcreds.ClientID) != 0 && len(oauthcreds.ClientSecret) != 0 {
 		fmt.Println("oauth2.toml exists, configuring google oauth2")
 		ab.Config.Modules.OAuth2Providers = map[string]authboss.OAuth2Provider{
-			"google": authboss.OAuth2Provider{
+			"google": {
 				OAuth2Config: &oauth2.Config{
 					ClientID:     oauthcreds.ClientID,
 					ClientSecret: oauthcreds.ClientSecret,
@@ -347,7 +347,7 @@ func create(w http.ResponseWriter, r *http.Request) {
 	var b Blog
 	if *flagAPI {
 		byt, err := ioutil.ReadAll(r.Body)
-		r.Body.Close()
+		_ = r.Body.Close()
 		if badRequest(w, err) {
 			return
 		}
@@ -405,7 +405,7 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	if *flagAPI {
 		byt, err := ioutil.ReadAll(r.Body)
-		r.Body.Close()
+		_ = r.Body.Close()
 		if badRequest(w, err) {
 			return
 		}
@@ -489,10 +489,10 @@ func mustRender(w http.ResponseWriter, r *http.Request, name string, data authbo
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Println("failed to marshal json:", err)
-			fmt.Fprintln(w, `{"error":"internal server error"}`)
+			_, _ = fmt.Fprintln(w, `{"error":"internal server error"}`)
 		}
 
-		w.Write(byt)
+		_, _ = w.Write(byt)
 		return
 	}
 
@@ -503,7 +503,7 @@ func mustRender(w http.ResponseWriter, r *http.Request, name string, data authbo
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintln(w, "Error occurred rendering template:", err)
+	_, _ = fmt.Fprintln(w, "Error occurred rendering template:", err)
 }
 
 func redirect(w http.ResponseWriter, r *http.Request, path string) {
@@ -511,7 +511,7 @@ func redirect(w http.ResponseWriter, r *http.Request, path string) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Location", path)
 		w.WriteHeader(http.StatusFound)
-		fmt.Fprintf(w, `{"path": %q}`, path)
+		_, _ = fmt.Fprintf(w, `{"path": %q}`, path)
 		return
 	}
 
@@ -526,13 +526,13 @@ func badRequest(w http.ResponseWriter, err error) bool {
 	if *flagAPI {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, `{"error":"bad request"}`, err)
+		_, _ = fmt.Fprintln(w, `{"error":"bad request"}`, err)
 		return true
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintln(w, "Bad request:", err)
+	_, _ = fmt.Fprintln(w, "Bad request:", err)
 	return true
 }
 
@@ -540,7 +540,7 @@ type smsLogSender struct {
 }
 
 // Send an SMS
-func (s smsLogSender) Send(ctx context.Context, number, text string) error {
+func (s smsLogSender) Send(_ context.Context, number, text string) error {
 	fmt.Println("sms sent to:", number, "contents:", text)
 	return nil
 }
