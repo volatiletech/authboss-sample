@@ -109,7 +109,7 @@ func setupAuthboss() {
 
 	// TOTP2FAIssuer is the name of the issuer we use for totp 2fa
 	ab.Config.Modules.TOTP2FAIssuer = "ABBlog"
-	ab.Config.Modules.RoutesRedirectOnUnauthed = true
+	ab.Config.Modules.ResponseOnUnauthed = authboss.RespondRedirect
 
 	// Turn on e-mail authentication required
 	ab.Config.Modules.TwoFactorEmailAuthRequired = true
