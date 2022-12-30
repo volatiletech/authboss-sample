@@ -10,7 +10,7 @@ require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gorilla/schema v1.1.0
 	github.com/gorilla/sessions v1.2.0
-	github.com/justinas/nosurf v1.1.0
+	github.com/justinas/nosurf v1.1.1
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/volatiletech/authboss-clientstate v0.0.0-20200703184255-59bd50e97df6
