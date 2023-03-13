@@ -16,7 +16,7 @@ require (
 	github.com/volatiletech/authboss-clientstate v0.0.0-20200703184255-59bd50e97df6
 	github.com/volatiletech/authboss-renderer v0.0.0-20200703184356-6cbaa5b2354e
 	github.com/volatiletech/authboss/v3 v3.0.0-20200703183239-fddf30677c32
-	golang.org/x/net v0.0.0-20200625001655-4c5254603344 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
